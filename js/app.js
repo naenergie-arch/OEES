@@ -1,9 +1,100 @@
 /**
- * OEES – Hlavni aplikacni controller v0.2.0
- * Dynamicka navigace, vsechny moduly, Make.com integrace
+ * OEES – Hlavni aplikacni controller v0.3.0
+ * Dynamicka navigace, vsechny moduly, Make.com integrace, auth
  */
 
 'use strict';
+
+// ─── Auth – Prihlaseni do kalkulatoru ────────────────────────────────────────
+
+const CALC_SESSION_KEY = 'oees_calc_session';
+const CALC_API_URL = 'https://script.google.com/macros/s/AKfycbzRTSFxU28lSpMCS5JKD9yBtuj_YCRqXzx61KDS7SctpbnKx6Y4hkpZZDKz6blYJRU/exec';
+
+const DEFAULT_CALC_USERS = [
+  { jmeno: 'Administrator', email: 'opsp.energy@gmail.com', heslo: 'oees_admin_2026', aktivni: 'ano' }
+];
+
+function calcLogin() {
+  const email = document.getElementById('calc-login-email').value.trim().toLowerCase();
+  const heslo = document.getElementById('calc-login-heslo').value;
+  const zapamatovat = document.getElementById('calc-login-zapamatovat').checked;
+  const errEl = document.getElementById('calc-login-error');
+
+  if (!email) { errEl.textContent = 'Zadejte email.'; return; }
+  if (!heslo) { errEl.textContent = 'Zadejte heslo.'; return; }
+
+  errEl.textContent = 'Overuji...';
+
+  // Zkusime API
+  fetch(CALC_API_URL + '?action=admin_load_all')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && data.adminUsers) {
+        const user = data.adminUsers.find(u =>
+          u.email && u.email.toLowerCase() === email && u.heslo === heslo && u.aktivni === 'ano'
+        );
+        if (user) {
+          calcPrihlasUzivatele(user, zapamatovat);
+          return;
+        }
+      }
+      // Fallback na lokalni
+      calcLokalniPrihlaseni(email, heslo, zapamatovat, errEl);
+    })
+    .catch(() => {
+      calcLokalniPrihlaseni(email, heslo, zapamatovat, errEl);
+    });
+}
+
+function calcLokalniPrihlaseni(email, heslo, zapamatovat, errEl) {
+  const user = DEFAULT_CALC_USERS.find(u =>
+    u.email.toLowerCase() === email && u.heslo === heslo && u.aktivni === 'ano'
+  );
+  if (user) {
+    calcPrihlasUzivatele(user, zapamatovat);
+  } else {
+    errEl.textContent = 'Nespravny email nebo heslo.';
+  }
+}
+
+function calcPrihlasUzivatele(user, zapamatovat) {
+  document.getElementById('calc-login-screen').style.display = 'none';
+  document.getElementById('calc-app').style.display = '';
+  document.getElementById('calc-login-error').textContent = '';
+
+  const nameEl = document.getElementById('calc-user-name');
+  if (nameEl) nameEl.textContent = user.jmeno || user.email;
+
+  if (zapamatovat) {
+    localStorage.setItem(CALC_SESSION_KEY, JSON.stringify({
+      email: user.email, heslo: user.heslo, jmeno: user.jmeno
+    }));
+  }
+}
+
+function calcLogout() {
+  localStorage.removeItem(CALC_SESSION_KEY);
+  document.getElementById('calc-app').style.display = 'none';
+  document.getElementById('calc-login-screen').style.display = '';
+  document.getElementById('calc-login-email').value = '';
+  document.getElementById('calc-login-heslo').value = '';
+  document.getElementById('calc-login-error').textContent = '';
+}
+
+function zkusAutoLoginCalc() {
+  const json = localStorage.getItem(CALC_SESSION_KEY);
+  if (!json) return;
+  try {
+    const session = JSON.parse(json);
+    if (session.email && session.heslo) {
+      document.getElementById('calc-login-email').value = session.email;
+      document.getElementById('calc-login-heslo').value = session.heslo;
+      calcPrihlasUzivatele(session, true);
+    }
+  } catch (e) { /* ignoruj */ }
+}
+
+document.addEventListener('DOMContentLoaded', zkusAutoLoginCalc);
 
 // ─── Stav aplikace ───────────────────────────────────────────────────────────
 const OEES_STATE = {
