@@ -10,7 +10,33 @@
 </head>
 <body>
 
-<div class="oees-wrap">
+<!-- LOGIN SCREEN -->
+<div id="calc-login-screen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo">&#9889;</div>
+    <h1>OEES Kalkulator</h1>
+    <p>NaEnergie.cz &ndash; Analyzujte, optimalizujte, usetrete</p>
+    <iframe name="calcLoginSink" style="display:none"></iframe>
+    <form id="calcLoginForm" action="about:blank" target="calcLoginSink" method="post" onsubmit="calcLogin();return false;" autocomplete="on">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="calc-login-email" name="username" placeholder="vas@email.cz" autocomplete="username" onkeydown="if(event.key==='Enter') document.getElementById('calc-login-heslo').focus()">
+      </div>
+      <div class="login-field">
+        <label>Heslo</label>
+        <input type="password" id="calc-login-heslo" name="password" placeholder="Zadejte heslo" autocomplete="current-password" onkeydown="if(event.key==='Enter') calcLogin()">
+      </div>
+      <div class="login-field" style="flex-direction:row;align-items:center;gap:8px">
+        <input type="checkbox" id="calc-login-zapamatovat" checked>
+        <label for="calc-login-zapamatovat" style="font-weight:normal;font-size:0.85rem;cursor:pointer">Zapamatovat prihlaseni</label>
+      </div>
+      <button type="submit" class="btn btn-primary">Prihlasit se</button>
+    </form>
+    <div id="calc-login-error" class="login-error"></div>
+  </div>
+</div>
+
+<div class="oees-wrap" id="calc-app" style="display:none">
 
   <!-- HEADER -->
   <div class="oees-header">
