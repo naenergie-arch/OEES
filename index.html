@@ -40,10 +40,16 @@
 
   <!-- HEADER -->
   <div class="oees-header">
-    <div class="oees-logo">&#9889;</div>
-    <div>
-      <h1>Kalkulator uspor energii – OEES</h1>
-      <p>NaEnergie.cz &nbsp;|&nbsp; Analyzujte, optimalizujte, usetrete</p>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="oees-logo">&#9889;</div>
+      <div>
+        <h1>Kalkulator uspor energii – OEES</h1>
+        <p>NaEnergie.cz &nbsp;|&nbsp; Analyzujte, optimalizujte, usetrete</p>
+      </div>
+    </div>
+    <div class="oees-header-right">
+      <span id="calc-user-name" class="status-badge"></span>
+      <button class="btn btn-sm btn-secondary" onclick="calcLogout()">Odhlasit</button>
     </div>
   </div>
 
