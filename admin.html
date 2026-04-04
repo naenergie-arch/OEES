@@ -16,19 +16,22 @@
     <div class="login-logo">&#9889;</div>
     <h1>OEES Admin</h1>
     <p>NaEnergie.cz – Správa ceníků, provizí a dokumentace</p>
-    <div class="login-field">
-      <label>Email</label>
-      <input type="email" id="login-email" placeholder="vas@email.cz" onkeydown="if(event.key==='Enter') document.getElementById('login-heslo').focus()">
-    </div>
-    <div class="login-field">
-      <label>Heslo</label>
-      <input type="password" id="login-heslo" placeholder="Zadejte heslo" onkeydown="if(event.key==='Enter') adminLogin()">
-    </div>
-    <div class="login-field" style="flex-direction:row;align-items:center;gap:8px">
-      <input type="checkbox" id="login-zapamatovat" checked>
-      <label for="login-zapamatovat" style="font-weight:normal;font-size:0.85rem;cursor:pointer">Zapamatovat přihlášení</label>
-    </div>
-    <button class="btn btn-primary" onclick="adminLogin()">Přihlásit se</button>
+    <iframe name="adminLoginSink" style="display:none"></iframe>
+    <form id="adminLoginForm" action="about:blank" target="adminLoginSink" method="post" onsubmit="adminLogin();return false;" autocomplete="on">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="login-email" name="username" placeholder="vas@email.cz" autocomplete="username" onkeydown="if(event.key==='Enter') document.getElementById('login-heslo').focus()">
+      </div>
+      <div class="login-field">
+        <label>Heslo</label>
+        <input type="password" id="login-heslo" name="password" placeholder="Zadejte heslo" autocomplete="current-password" onkeydown="if(event.key==='Enter') adminLogin()">
+      </div>
+      <div class="login-field" style="flex-direction:row;align-items:center;gap:8px">
+        <input type="checkbox" id="login-zapamatovat" checked>
+        <label for="login-zapamatovat" style="font-weight:normal;font-size:0.85rem;cursor:pointer">Zapamatovat přihlášení</label>
+      </div>
+      <button type="submit" class="btn btn-primary">Přihlásit se</button>
+    </form>
     <div id="login-error" class="login-error"></div>
   </div>
 </div>
