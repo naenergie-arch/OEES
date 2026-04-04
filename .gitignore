@@ -1,3 +1,5 @@
+# Sync skripty (lokalni, nesynchronizovat)
 git-auto-sync.ps1
 START-SYNC.bat
+OEES-sync.bat
 .claude/
