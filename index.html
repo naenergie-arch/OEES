@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OEES – Kalkulator uspor energii | NaEnergie.cz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="oees-wrap">
+
+  <!-- HEADER -->
+  <div class="oees-header">
+    <div class="oees-logo">&#9889;</div>
+    <div>
+      <h1>Kalkulator uspor energii – OEES</h1>
+      <p>NaEnergie.cz &nbsp;|&nbsp; Analyzujte, optimalizujte, usetrete</p>
+    </div>
+  </div>
+
+  <!-- PROGRESS STEPS (dynamicky generovane z app.js) -->
+  <div class="steps" id="steps-container"></div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       PANEL 1 – OBECNE INFORMACE, OBJEKT, KONTAKT
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="module-panel active" id="panel-objekt">
+
+    <!-- SEKCE: Obecne informace -->
+    <div class="card">
+      <div class="card-title"><span class="icon">&#128203;</span> Obecne informace</div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label>Kategorie <span class="required">*</span></label>
+          <select id="o_kategorie" onchange="aktualizujKategorii()">
+            <option value="firmy_bez_dph">Firmy (bez DPH)</option>
+            <option value="bd_s_dph">BD (s DPH) - SBD, SVJ, fyzicka osoba</option>
+            <option value="bd_bez_dph">BD (bez DPH) - pravnicka osoba</option>
+            <option value="mesta_bez_dph">Mesta (bez DPH)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ICO <span class="required">*</span></label>
+          <input type="text" id="o_ico" placeholder="12345678" maxlength="8">
+        </div>
+        <div class="field">
+          <label>Nazev subjektu <span class="required">*</span></label>
+          <input type="text" id="o_nazev" placeholder="napr. ABC s.r.o.">
+        </div>
+        <div class="field">
+          <label>Odpovedne osoby</label>
+          <input type="text" id="o_odpovedne" placeholder="">
+        </div>
+      </div>
+    </div>
+
+    <!-- SEKCE: Adresa sidla -->
+    <div class="card">
+      <div class="card-title"><span class="icon">&#127968;</span> Adresa sidla subjektu</div>
+      <div class="form-grid-3">
+        <div class="field">
+          <label>Ulice a cislo domu <span class="required">*</span></label>
+          <input type="text" id="o_sidlo_ulice" placeholder="">
+        </div>
+        <div class="field">
+          <label>Obec <span class="required">*</span></label>
+          <input type="text" id="o_sidlo_obec" placeholder="">
+        </div>
+        <div class="field">
+          <label>PSC <span class="required">*</span></label>
+          <input type="text" id="o_sidlo_psc" placeholder="" maxlength="6">
+        </div>
+      </div>
+      <div class="card-subtitle">Adresa mista realizace <small class="text-muted">(pokud se lisi od sidla)</small></div>
+      <div class="form-grid-3">
+        <div class="field">
+          <label>Ulice a cislo domu</label>
+          <input type="text" id="o_real_ulice" placeholder="">
+        </div>
+        <div class="field">
+          <label>Obec</label>
+          <input type="text" id="o_real_obec" placeholder="">
+        </div>
+        <div class="field">
+          <label>PSC</label>
+          <input type="text" id="o_real_psc" placeholder="" maxlength="6">
+        </div>
+      </div>
+    </div>
+
+    <!-- SEKCE: Kontakt -->
+    <div class="card">
+      <div class="card-title"><span class="icon">&#128100;</span> Kontaktni udaje</div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label>Hlavni kontaktni osoba</label>
+          <input type="text" id="o_kontakt" placeholder="Jmeno Prijmeni">
+        </div>
+        <div class="field">
+          <label>Ostatni kontaktni osoby</label>
+          <input type="text" id="o_kontakt2" placeholder="">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="o_email" placeholder="kontakt@firma.cz">
+        </div>
+        <div class="field">
+          <label>Telefon</label>
+          <input type="tel" id="o_telefon" placeholder="+420 777 123 456">
+        </div>
+      </div>
+    </div>
+
+    <!-- SEKCE: Informace o objektu -->
+    <div class="card">
+      <div class="card-title"><span class="icon">&#127981;</span> Informace o objektu</div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label>Typ objektu <span class="required">*</span></label>
+          <select id="o_typ">
+            <option value="rodinny_dum">Rodinny dum</option>
+            <option value="vyrobni_hala">Vyrobni hala</option>
+            <option value="kancelarska_budova">Kancelarska budova</option>
+            <option value="bytovy_dum">Bytovy dum</option>
+            <option value="skola">Skola</option>
+            <option value="nemocnice">Nemocnice</option>
+            <option value="obchodni_centrum">Obchodni centrum</option>
+            <option value="sklad">Sklad</option>
+            <option value="restaurace">Restaurace</option>
+            <option value="hotel">Hotel</option>
+            <option value="zimni_hala">Zimni a sportovni hala</option>
+            <option value="letni_hala">Letni sportovni hala</option>
+            <option value="kryty_bazen">Kryty bazen</option>
+            <option value="letni_koupaliste">Letni verejne koupaliste</option>
+            <option value="wellness">Velke wellness centrum</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Typ ohrevu pro vytapeni <span class="required">*</span></label>
+          <select id="o_typ_ohrevu">
+            <option value="teplarna">Teplarna</option>
+            <option value="plyn_kotelna">Subjekt ma plynovou kotelnu</option>
+            <option value="elektro_kotelna">Subjekt ma elektrickou kotelnu</option>
+            <option value="plyn_byt">Kazdy byt ma svuj plynovy kotel</option>
+            <option value="elektro_byt">Kazdy byt ma svuj elektricky kotel</option>
+            <option value="tuha_paliva">Kotel na tuha paliva</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Pocet vchodu <span class="required">*</span></label>
+          <input type="number" id="o_vchody" value="1" min="1">
+        </div>
+        <div class="field">
+          <label>Pocet bytu / odberovych mist <span class="required">*</span></label>
+          <input type="number" id="o_byty" value="1" min="1">
+        </div>
+        <div class="field">
+          <label>Vyhrivana plocha <span class="unit">m2</span></label>
+          <input type="number" id="o_plocha" placeholder="1500" min="1">
+        </div>
+        <div class="field">
+          <label>Pocet pater</label>
+          <input type="number" id="o_patra" min="1">
+        </div>
+        <div class="field">
+          <label>Pocet obyvatel</label>
+          <input type="number" id="o_obyvatel" min="0">
+        </div>
+        <div class="field">
+          <label>Pocet navstevniku <span class="unit">osoby/den</span></label>
+          <input type="number" id="o_navstevniku" min="0">
+        </div>
+      </div>
+
+      <!-- Tepelne ztraty -->
+      <div class="card-subtitle" style="margin-top:16px">Tepelne ztraty objektu</div>
+      <div class="form-grid-3">
+        <div class="field">
+          <label>Velikost tepelne ztraty <span class="unit">kW</span></label>
+          <input type="number" id="o_tepelna_ztrata" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Druh izolace / zatepleni</label>
+          <select id="o_izolace">
+            <option value="">-- vyberte --</option>
+            <option value="nizka">Nizka</option>
+            <option value="stredni">Stredni</option>
+            <option value="vysoka">Vysoka</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Delka domu (nejdelsi strana) <span class="unit">m</span></label>
+          <input type="number" id="o_delka" min="0" step="0.1">
+        </div>
+      </div>
+    </div>
+
+    <!-- SEKCE: Vyber technologii -->
+    <div class="card">
+      <div class="card-title"><span class="icon">&#9881;</span> Vyber technologii a dalsich uspornych reseni</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <label class="checkbox-label"><input type="checkbox" id="m_elektrina" checked> &#9889; Elektrina & distribuce</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_fve" checked> &#9728;&#65039; FVE - fotovoltaika</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_baterie"> &#128267; Bateriove uloziste</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_ev"> &#128663; Nabijecka elektromobilu</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_plyn"> &#128293; Plyn (komodita)</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_voda"> &#128167; Voda</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_tc"> &#10052;&#65039; Tepelne cerpadlo</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_kogenerace"> &#9889; Kogeneracni jednotka</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_plyn_kotel"> &#128293; Plynovy kotel</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_inteligentni"> &#129302; Inteligentni rizeni</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_distribuce_opt"> &#128200; Optimalizace distribuce</label>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="field">
+          <label>Bude pozadano o dotace <span class="required">*</span></label>
+          <select id="o_dotace">
+            <option value="ano">Ano</option>
+            <option value="ne">Ne</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Zohledneni ceny pro zakaznika <span class="required">*</span></label>
+          <select id="o_zohledneni_ceny">
+            <option value="ano">Ano</option>
+            <option value="ne">Ne</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>VIP sleva <span class="unit">% (0-20)</span></label>
+          <input type="number" id="o_vip_sleva" value="0" min="0" max="20" step="1">
+        </div>
+        <div class="field">
+          <label>Zmena dodavatele elektricke energie</label>
+          <select id="o_zmena_dodavatele">
+            <option value="ne">Ne</option>
+            <option value="ano">Ano</option>
+          </select>
+        </div>
+        <div class="field" id="o_balicek_wrap" style="display:none">
+          <label>Produktovy balicek pro bytove domy</label>
+          <select id="o_balicek">
+            <option value="">-- vyberte --</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Vykonova rovnovaha - bateriove uloziste</label>
+          <select id="o_vykonova_rovnovaha">
+            <option value="ne">Ne</option>
+            <option value="ano">Ano</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ELEKTRINA
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-elektrina">
+    <div id="modul_elektrina_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       OPTIMALIZACE DISTRIBUCE
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-distribuce">
+    <div id="modul_distribuce_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       VODA
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-voda">
+    <div id="modul_voda_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FVE
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-fve">
+    <div id="modul_fve_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PLYN / TEPLO
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-plyn">
+    <div id="modul_plyn_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TEPELNE CERPADLO
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-tc">
+    <div id="modul_tc_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       KOGENERACNI JEDNOTKA
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-kogenerace">
+    <div id="modul_kogenerace_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PLYNOVY KOTEL (tepelny zdroj)
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-kotel">
+    <div id="modul_kotel_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       BATERIOVE ULOZISTE
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-baterie">
+    <div id="modul_baterie_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       EV NABIJECKI
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-ev">
+    <div id="modul_ev_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       INTELIGENTNI RIZENI
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-inteligentni">
+    <div id="modul_inteligentni_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       DOTACE
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-dotace">
+    <div id="modul_dotace_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FINANCOVANI
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-financovani">
+    <div id="modul_financovani_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       POZNAMKY, OBSAH PRODUKTU, KONTAKT EP
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-poznamky">
+    <div id="modul_poznamky_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SOUHRN VYSLEDKU
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-vysledky">
+    <div class="card">
+      <div class="card-title">
+        <span class="icon">&#128202;</span> Souhrn analýzy – <span id="souhrn_nazev">váš objekt</span>
+      </div>
+      <div id="souhrn_obsah">
+        <p class="text-muted">Dokončete předchozí kroky pro zobrazení souhrnných výsledků.</p>
+      </div>
+      <div id="upresneni-wrap" style="display:none;margin-top:16px">
+        <button class="btn btn-primary" onclick="otevritUpresneniStudie()" id="btn-upresneni-studie">&#128203; Upřesnění finální studie</button>
+      </div>
+      <div class="btn-row" style="margin-top:24px">
+        <button class="btn btn-primary" onclick="ulozCase()">&#128190; Uložit případ do databáze</button>
+        <button class="btn btn-secondary" onclick="generujStudii()">&#128196; Generovat předběžnou studii</button>
+        <button class="btn btn-secondary" onclick="resetFormStav()">&#128260; Nový případ</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /oees-wrap -->
+
+<!-- ══════════════════════════════════════════════════════
+     SKRIPTY
+══════════════════════════════════════════════════════ -->
+<script src="js/data/tarify.js?v=3"></script>
+<script src="js/modules/elektrina.js?v=2"></script>
+<script src="js/modules/distribuce.js?v=3"></script>
+<script src="js/modules/voda.js?v=2"></script>
+<script src="js/modules/fve.js?v=2"></script>
+<script src="js/modules/plyn.js?v=2"></script>
+<script src="js/modules/tc.js?v=2"></script>
+<script src="js/modules/kogenerace.js?v=2"></script>
+<script src="js/modules/kotel.js?v=2"></script>
+<script src="js/modules/baterie.js?v=2"></script>
+<script src="js/modules/ev.js?v=2"></script>
+<script src="js/modules/inteligentni.js?v=2"></script>
+<script src="js/modules/dotace.js?v=2"></script>
+<script src="js/modules/financovani.js?v=2"></script>
+<script src="js/modules/poznamky.js?v=2"></script>
+<script src="js/app.js?v=2"></script>
+
+</body>
+</html>

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OEES Admin – NaEnergie.cz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo">&#9889;</div>
+    <h1>OEES Admin</h1>
+    <p>NaEnergie.cz – Správa ceníků, provizí a dokumentace</p>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="vas@email.cz" onkeydown="if(event.key==='Enter') document.getElementById('login-heslo').focus()">
+    </div>
+    <div class="login-field">
+      <label>Heslo</label>
+      <input type="password" id="login-heslo" placeholder="Zadejte heslo" onkeydown="if(event.key==='Enter') adminLogin()">
+    </div>
+    <div class="login-field" style="flex-direction:row;align-items:center;gap:8px">
+      <input type="checkbox" id="login-zapamatovat" checked>
+      <label for="login-zapamatovat" style="font-weight:normal;font-size:0.85rem;cursor:pointer">Zapamatovat přihlášení</label>
+    </div>
+    <button class="btn btn-primary" onclick="adminLogin()">Přihlásit se</button>
+    <div id="login-error" class="login-error"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-panel" class="admin-panel" style="display:none">
+
+  <!-- HEADER -->
+  <div class="admin-header">
+    <div class="admin-header-left">
+      <span class="admin-logo">&#9889;</span>
+      <div>
+        <h1>OEES Admin Panel</h1>
+        <p>NaEnergie.cz – Správa konfigurace</p>
+      </div>
+    </div>
+    <div class="admin-header-right">
+      <span id="admin-status" class="status-badge">Online</span>
+      <button class="btn btn-sm btn-secondary" onclick="adminLogout()">Odhlásit</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="admin-tabs">
+    <button class="tab active" data-tab="ceniky" onclick="switchTab('ceniky')">Ceníky</button>
+    <button class="tab" data-tab="rozpocty" onclick="switchTab('rozpocty')">Rozpočty</button>
+    <button class="tab" data-tab="pd" onclick="switchTab('pd')">Projektová dok.</button>
+    <button class="tab" data-tab="naklady" onclick="switchTab('naklady')">Náklady</button>
+    <button class="tab" data-tab="provize" onclick="switchTab('provize')">Provize &amp; Body</button>
+    <button class="tab" data-tab="dodavatele" onclick="switchTab('dodavatele')">Dodavatelé</button>
+    <button class="tab" data-tab="poradci" onclick="switchTab('poradci')">Poradci</button>
+    <button class="tab" data-tab="nastaveni" onclick="switchTab('nastaveni')">Nastavení</button>
+  </div>
+
+  <!-- TAB CONTENT -->
+  <div class="admin-content">
+
+    <!-- CENIKY -->
+    <div class="tab-panel active" id="tab-ceniky">
+      <div class="panel-header">
+        <h2>Ceníky technologií</h2>
+        <div class="panel-actions">
+          <select id="ceniky-tech-filter" onchange="cenikFilterChanged()">
+            <option value="">Všechny technologie</option>
+            <option value="fve">FVE</option>
+            <option value="tc">Tepelné čerpadlo</option>
+            <option value="baterie">Baterie</option>
+            <option value="ev">Nabíječka elektromobilů</option>
+            <option value="kogenerace">Kogenerace</option>
+            <option value="kotel">Plynový kotel</option>
+            <option value="inteligentni">Inteligentní řízení</option>
+            <option value="voda">Voda</option>
+            <option value="distribuce">Optimalizace + Sloučení</option>
+            <option value="dokumentace">Projektová dokumentace</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="cenikPridatRadek()">+ Přidat položku</button>
+          <button class="btn btn-secondary btn-sm" onclick="cenikNacistVychozi()">Načíst výchozí ceník</button>
+        </div>
+      </div>
+      <div id="ceniky-table-wrap" class="table-wrap">
+        <table class="admin-table" id="ceniky-table">
+          <thead>
+            <tr>
+              <th>Technologie</th>
+              <th>Název položky</th>
+              <th>MJ</th>
+              <th title="Výběr z číselníku dodavatelů nebo zadejte nového">Dodavatel</th>
+              <th class="num">Cena nákup</th>
+              <th class="num">Marže %</th>
+              <th class="num">Cena prodej</th>
+              <th>Poznámka</th>
+              <th>Platnost od</th>
+              <th class="actions">Akce</th>
+            </tr>
+          </thead>
+          <tbody id="ceniky-tbody"></tbody>
+        </table>
+      </div>
+      <div class="panel-footer">
+        <button class="btn btn-primary" onclick="cenikUlozit()">Uložit změny</button>
+        <span id="ceniky-status" class="save-status"></span>
+      </div>
+    </div>
+
+    <!-- ROZPOCTY -->
+    <div class="tab-panel" id="tab-rozpocty">
+      <div class="panel-header">
+        <h2>Šablony rozpočtů</h2>
+        <div class="panel-actions">
+          <select id="rozpocty-tech-filter" onchange="rozpocetFilterChanged()">
+            <option value="">Všechny technologie</option>
+            <option value="fve">FVE</option>
+            <option value="tc">Tepelné čerpadlo</option>
+            <option value="baterie">Baterie</option>
+            <option value="ev">Nabíječka elektromobilů</option>
+            <option value="kogenerace">Kogenerace</option>
+            <option value="kotel">Plynový kotel</option>
+            <option value="inteligentni">Inteligentní řízení</option>
+            <option value="voda">Voda</option>
+            <option value="distribuce">Optimalizace + Sloučení</option>
+            <option value="dokumentace">Projektová dokumentace</option>
+          </select>
+          <select id="rozpocty-typ-filter" onchange="rozpocetFilterChanged()">
+            <option value="">Všechny typy</option>
+            <option value="celkovy">Celkový rozpočet</option>
+            <option value="dilci">Dílčí rozpočty</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="rozpocetPridatRadek()">+ Přidat položku</button>
+          <button class="btn btn-secondary btn-sm" onclick="rozpocetNacistVychozi()">Načíst výchozí šablonu</button>
+        </div>
+      </div>
+
+      <!-- Celkovy rozpocet -->
+      <div class="card" id="rozpocty-celkovy-card">
+        <div class="card-title">Celkový položkový rozpočet (souhrn po technologiích)</div>
+        <div class="table-wrap">
+          <table class="admin-table" id="rozpocty-celkovy-table">
+            <thead>
+              <tr>
+                <th style="width:50px">Pořadí</th>
+                <th>Technologie</th>
+                <th>Název položky</th>
+                <th>Cenový vzorec</th>
+                <th>Poznámka</th>
+                <th class="actions">Akce</th>
+              </tr>
+            </thead>
+            <tbody id="rozpocty-celkovy-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Dilci rozpocty -->
+      <div class="card" id="rozpocty-dilci-card" style="margin-top:20px">
+        <div class="card-title">Dílčí položkové rozpočty (detail po technologiích)</div>
+        <div class="table-wrap">
+          <table class="admin-table" id="rozpocty-dilci-table">
+            <thead>
+              <tr>
+                <th style="width:50px">Pořadí</th>
+                <th>Technologie</th>
+                <th>Název položky</th>
+                <th>MJ</th>
+                <th class="num" style="width:70px">Podíl %</th>
+                <th>Vzorec množství</th>
+                <th>Ref. ceník</th>
+                <th>Poznámka</th>
+                <th class="actions">Akce</th>
+              </tr>
+            </thead>
+            <tbody id="rozpocty-dilci-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <button class="btn btn-primary" onclick="rozpocetUlozit()">Uložit změny</button>
+        <span id="rozpocty-status" class="save-status"></span>
+      </div>
+    </div>
+
+    <!-- PROJEKTOVA DOKUMENTACE -->
+    <div class="tab-panel" id="tab-pd">
+      <div class="panel-header">
+        <h2>Projektová dokumentace</h2>
+        <div class="panel-actions">
+          <select id="pd-tech-filter" onchange="pdFilterChanged()">
+            <option value="">Všechny technologie</option>
+            <option value="fve">FVE</option>
+            <option value="tc">Tepelné čerpadlo</option>
+            <option value="baterie">Baterie</option>
+            <option value="ev">Nabíječka elektromobilů</option>
+            <option value="kogenerace">Kogenerace</option>
+            <option value="kotel">Plynový kotel</option>
+            <option value="inteligentni">Inteligentní řízení</option>
+            <option value="voda">Voda</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="pdPridatRadek()">+ Přidat položku</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="pd-table">
+          <thead>
+            <tr>
+              <th>Technologie</th>
+              <th>Název položky</th>
+              <th>Popis</th>
+              <th class="num" title="Cena pro bytové domy (SBD, SVJ, fyzická osoba)">Cena Bytové domy</th>
+              <th class="num" title="Cena pro firmy (právnická osoba bez DPH)">Cena Firmy</th>
+              <th class="num" title="Cena pro města a obce (bez DPH)">Cena Města a obce</th>
+              <th>V základu</th>
+              <th class="actions">Akce</th>
+            </tr>
+          </thead>
+          <tbody id="pd-tbody"></tbody>
+        </table>
+      </div>
+      <div class="panel-footer">
+        <button class="btn btn-primary" onclick="pdUlozit()">Uložit změny</button>
+        <span id="pd-status" class="save-status"></span>
+      </div>
+    </div>
+
+    <!-- NAKLADY -->
+    <div class="tab-panel" id="tab-naklady">
+      <div class="panel-header">
+        <h2>Nákupní ceny od dodavatelů</h2>
+        <div class="panel-actions">
+          <select id="naklady-tech-filter" onchange="nakladyFilterChanged()">
+            <option value="">Všechny technologie</option>
+            <option value="fve">FVE</option>
+            <option value="tc">Tepelné čerpadlo</option>
+            <option value="baterie">Baterie</option>
+            <option value="ev">Nabíječka elektromobilů</option>
+            <option value="kogenerace">Kogenerace</option>
+            <option value="kotel">Plynový kotel</option>
+            <option value="inteligentni">Inteligentní řízení</option>
+            <option value="voda">Voda</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="nakladyPridatRadek()">+ Přidat položku</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="naklady-table">
+          <thead>
+            <tr>
+              <th>Dodavatel</th>
+              <th>Technologie</th>
+              <th>Název položky</th>
+              <th class="num">Cena nákup</th>
+              <th>Datum</th>
+              <th>Poznámka</th>
+              <th class="actions">Akce</th>
+            </tr>
+          </thead>
+          <tbody id="naklady-tbody"></tbody>
+        </table>
+      </div>
+      <div class="panel-footer">
+        <button class="btn btn-primary" onclick="nakladyUlozit()">Uložit změny</button>
+        <span id="naklady-status" class="save-status"></span>
+      </div>
+    </div>
+
+    <!-- PROVIZE & BODY -->
+    <div class="tab-panel" id="tab-provize">
+      <div class="panel-header">
+        <h2>Provizní systém &amp; Bodové hodnoty</h2>
+      </div>
+
+      <!-- Skalovaci tabulka -->
+      <div class="card">
+        <div class="card-title">Škálovací model marže</div>
+        <p class="text-muted" style="margin-bottom:12px">Fixní složka: prvních 1 mil Kč vždy 20% marže = 200 000 Kč. Variabilní část dle tabulky níže.</p>
+        <table class="admin-table" id="provize-scaling-table">
+          <thead>
+            <tr>
+              <th>Cenové pásmo</th>
+              <th class="num">Dolní hranice (Kč)</th>
+              <th class="num">Horní hranice (Kč)</th>
+              <th class="num">Dolní marže (%)</th>
+              <th class="num">Horní marže (%)</th>
+            </tr>
+          </thead>
+          <tbody id="provize-scaling-tbody"></tbody>
+        </table>
+        <div style="margin-top:12px">
+          <button class="btn btn-sm btn-secondary" onclick="provizeTestCalc()">Testovací výpočet</button>
+          <span style="margin-left:12px">Cena zakázky: <input type="number" id="provize-test-cena" value="2000000" style="width:140px"> Kč</span>
+          <div id="provize-test-result" class="test-result" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- Rozdeleni ES/OE -->
+      <div class="card">
+        <div class="card-title">Rozdělení marže ES / OE</div>
+        <div class="form-grid-3">
+          <div class="field">
+            <label>Podíl ES (Energetický specialista)</label>
+            <input type="number" id="provize-es-podil" value="50" min="0" max="100" step="1"> <span class="unit">%</span>
+          </div>
+          <div class="field">
+            <label>Podíl OE (Obchodní expert)</label>
+            <input type="number" id="provize-oe-podil" value="50" min="0" max="100" step="1"> <span class="unit">%</span>
+          </div>
+          <div class="field">
+            <label>Dělič pro body</label>
+            <input type="number" id="provize-bod-delic" value="222.22" step="0.01"> <span class="unit">Kč/bod</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Voda marze -->
+      <div class="card">
+        <div class="card-title">Voda – speciální marže</div>
+        <div class="field" style="max-width:200px">
+          <label>Fixní marže voda</label>
+          <input type="number" id="provize-voda-marze" value="20" min="0" max="100" step="1"> <span class="unit">%</span>
+        </div>
+      </div>
+
+      <!-- Etapy -->
+      <div class="card">
+        <div class="card-title">Etapy provizí</div>
+        <table class="admin-table" id="provize-etapy-table">
+          <thead>
+            <tr>
+              <th class="num">Podíl (%)</th>
+              <th>Činnost</th>
+              <th class="num">Za obchod (%)</th>
+              <th class="num">Za odbornost (%)</th>
+            </tr>
+          </thead>
+          <tbody id="provize-etapy-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel-footer">
+        <button class="btn btn-primary" onclick="provizeUlozit()">Uložit změny</button>
+        <span id="provize-status" class="save-status"></span>
+      </div>
+    </div>
+
+    <!-- DODAVATELE -->
+    <div class="tab-panel" id="tab-dodavatele">
+      <div class="panel-header">
+        <h2>Číselník dodavatelů</h2>
+        <div class="panel-actions">
+          <button class="btn btn-primary btn-sm" onclick="dodavatelePridatRadek()">+ Přidat dodavatele</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="dodavatele-table">
+          <thead>
+            <tr>
+              <th>Název dodavatele</th>
+              <th>IČO</th>
+              <th title="Kontaktní osoba u dodavatele">Kontaktní osoba</th>
+              <th>Telefon</th>
+              <th>Email</th>
+              <th title="Které technologie dodavatel dodává – lze vybrat více">Technologie</th>
+              <th>Poznámka</th>
+              <th title="Aktivní = zobrazuje se ve výběrech. Neaktivní = skrytý.">Aktivní</th>
+              <th class="actions">Akce</th>
+            </tr>
+          </thead>
+          <tbody id="dodavatele-tbody"></tbody>
+        </table>
+      </div>
+      <div class="panel-footer">
+        <button class="btn btn-primary" onclick="dodavateleUlozit()">Uložit změny</button>
+        <span id="dodavatele-status" class="save-status"></span>
+      </div>
+    </div>
+
+    <!-- PORADCI -->
+    <div class="tab-panel" id="tab-poradci">
+      <div class="panel-header">
+        <h2>Správa poradců</h2>
+        <div class="panel-actions">
+          <button class="btn btn-primary btn-sm" onclick="poradciPridatRadek()">+ Přidat poradce</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="poradci-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Jméno</th>
+              <th>Telefon</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Aktivní</th>
+              <th class="actions">Akce</th>
+            </tr>
+          </thead>
+          <tbody id="poradci-tbody"></tbody>
+        </table>
+      </div>
+      <div class="panel-footer">
+        <button class="btn btn-primary" onclick="poradciUlozit()">Uložit změny</button>
+        <span id="poradci-status" class="save-status"></span>
+      </div>
+    </div>
+
+    <!-- NASTAVENI -->
+    <div class="tab-panel" id="tab-nastaveni">
+      <div class="panel-header">
+        <h2>Nastavení</h2>
+      </div>
+
+      <!-- CISELNIK TECHNOLOGII -->
+      <div class="card">
+        <div class="card-title">Číselník technologií</div>
+        <p class="text-muted" style="margin-bottom:12px">Technologie používané v celém systému. Při přidání nové technologie se automaticky vytvoří řádek v celkovém rozpočtu.</p>
+        <div class="table-wrap">
+          <table class="admin-table" id="nastaveni-tech-table">
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th style="width:120px" title="Interní klíč bez diakritiky, např. fve, tc, baterie">Klíč</th>
+                <th title="Zobrazovaný název technologie">Název technologie</th>
+                <th style="width:150px" title="Vzorec pro napojení na cenu z kalkulátoru, např. {{FVECena}}">Cenový vzorec</th>
+                <th title="Jak se technologie zobrazí v celkovém položkovém rozpočtu">Název v rozpočtu</th>
+                <th class="actions">Akce</th>
+              </tr>
+            </thead>
+            <tbody id="nastaveni-tech-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:12px;align-items:center">
+          <button class="btn btn-primary btn-sm" onclick="technologiePridat()">+ Přidat technologii</button>
+          <button class="btn btn-primary" onclick="technologieUlozit()">Uložit technologie</button>
+          <span id="nastaveni-tech-status" class="save-status"></span>
+        </div>
+      </div>
+
+      <!-- PRISTUPOVA PRAVA -->
+      <div class="card">
+        <div class="card-title">Uživatelé s přístupem do administrace</div>
+        <p class="text-muted" style="margin-bottom:12px">Každý uživatel se přihlašuje svým emailem a heslem. U každé záložky lze nastavit úroveň přístupu samostatně.</p>
+        <div class="table-wrap">
+          <table class="admin-table" id="nastaveni-uzivatele-table">
+            <thead>
+              <tr>
+                <th>Jméno</th>
+                <th>Email</th>
+                <th>Heslo</th>
+                <th title="Aktivní = uživatel se může přihlásit. Neaktivní = přístup zablokován.">Aktivní</th>
+                <th title="Admin = plné úpravy. Editor = může měnit data. Prohlížeč = pouze čtení. Ne = záložka skrytá.">Ceníky</th>
+                <th title="Admin = plné úpravy. Editor = může měnit data. Prohlížeč = pouze čtení. Ne = záložka skrytá.">Rozpočty</th>
+                <th title="Admin = plné úpravy. Editor = může měnit data. Prohlížeč = pouze čtení. Ne = záložka skrytá.">Projektová dokumentace</th>
+                <th title="Admin = plné úpravy. Editor = může měnit data. Prohlížeč = pouze čtení. Ne = záložka skrytá.">Náklady</th>
+                <th title="Admin = plné úpravy. Editor = může měnit data. Prohlížeč = pouze čtení. Ne = záložka skrytá.">Provize a Body</th>
+                <th title="Admin = plné úpravy. Editor = může měnit data. Prohlížeč = pouze čtení. Ne = záložka skrytá.">Dodavatelé</th>
+                <th title="Admin = plné úpravy. Editor = může měnit data. Prohlížeč = pouze čtení. Ne = záložka skrytá.">Poradci</th>
+                <th title="Admin = plné úpravy. Editor = může měnit data. Prohlížeč = pouze čtení. Ne = záložka skrytá.">Nastavení</th>
+                <th class="actions">Akce</th>
+              </tr>
+            </thead>
+            <tbody id="nastaveni-uzivatele-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-primary btn-sm" onclick="nastaveniPridatUzivatele()">+ Přidat uživatele</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Přihlášený uživatel</div>
+        <p id="nastaveni-aktualni-uzivatel" class="text-muted">--</p>
+        <button class="btn btn-sm btn-secondary" style="margin-top:8px" onclick="adminLogout()">Odhlásit se</button>
+      </div>
+
+      <div class="panel-footer">
+        <button class="btn btn-primary" onclick="nastaveniUlozit()">Uložit změny přístupu</button>
+        <span id="nastaveni-status" class="save-status"></span>
+      </div>
+    </div>
+
+  </div><!-- /admin-content -->
+
+</div><!-- /admin-panel -->
+
+<!-- SKRIPTY -->
+<script src="js/admin/admin-app.js"></script>
+<script src="js/admin/ceniky.js"></script>
+<script src="js/admin/rozpocty.js"></script>
+<script src="js/admin/pd.js"></script>
+<script src="js/admin/naklady.js"></script>
+<script src="js/admin/provize.js"></script>
+<script src="js/admin/poradci.js"></script>
+<script src="js/admin/dodavatele.js"></script>
+
+</body>
+</html>
