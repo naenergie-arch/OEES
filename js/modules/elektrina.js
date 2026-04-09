@@ -701,6 +701,19 @@ function zobrazVysledkyElektrina(s, b, sC, bC, p, sD, bD, sDist, bDist) {
           Navrhované změny vedou k navýšení nákladů. Upravte parametry.
         </div>
       `}
+
+      ${(function(){
+        const voda = OEES_STATE.case?.voda;
+        if (!voda || !voda.el_spotreba_tc_tuv_mwh || voda.el_spotreba_tc_tuv_mwh < 0.1) return '';
+        const mwh = voda.el_spotreba_tc_tuv_mwh.toFixed(1);
+        const kc = Math.round(voda.el_spotreba_tc_tuv_mwh * 1000 * (b.cena_vt || 4.5));
+        return '<div class="doporuceni" style="margin-top:12px;background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:white">' +
+          '<strong>💧 TČ pro TUV (z modulu Voda)</strong> ' +
+          'Tepelné čerpadlo pro ohřev TUV zvýší spotřebu elektřiny o <strong>' + mwh + ' MWh/rok</strong> ' +
+          '(≈ ' + new Intl.NumberFormat('cs-CZ').format(kc) + ' Kč/rok). ' +
+          'Zohledněte v budoucí spotřebě.' +
+          '</div>';
+      })()}
     </div>
   `;
 }
