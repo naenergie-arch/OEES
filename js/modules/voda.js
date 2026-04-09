@@ -1,204 +1,343 @@
 /**
- * OEES Modul: Voda
- * Studena/tepla voda, rekuperace tepla z odpadni vody,
- * recyklace odpadni vody, usporne sprchy, stoupacky, WC, kanalizace
+ * OEES Modul: Voda + TUV
+ * Dle Excel V15: TUV vypocty, TUV dimenzovani, Voda-vypocty, voda cenik podklady
+ *
+ * Struktura:
+ * 1. Spotreba studene a teple vody (m3/rok)
+ * 2. TUV dimenzovani: ohrev stavajici, s FVE, s TC, s FVE+TC
+ * 3. Recyklace odpadni vody (cisticky dle kapacity m3/den)
+ * 4. Rekuperace tepla z odpadni vody
+ * 5. Usporne prvky (sporici sprchy SV, sporici sprchy TV, perlatory, WC)
+ * 6. Destovka
+ * 7. Ekonomika: investice, uspora, navratnost, cash flow s inflaci
  */
 
 'use strict';
 
-// ─── Data voda ──────────────────────────────────────────────────────────────
+// ─── Data dle Excel V15 ────────────────────────────────────────────────────
+
 const VODA_DATA = {
-  // Prumerna cena vody (vodne + stocne) 2026
-  cena_studena_m3: 110,    // Kc/m3 (CR prumer)
-  cena_stocne_m3: 55,      // Kc/m3 (prum. stocne)
-  cena_ohrev_mwh: 4500,      // Kc/MWh pro ohrev vody (elektricky)
-  cena_ohrev_plyn_mwh: 2800, // Kc/MWh pro ohrev vody (plyn)
+  // Normy spotreby
+  norma_tuv_l_os_den: 40,         // litrů TUV/osobu/den
+  norma_studena_l_os_den: 100,    // litrů studená/osobu/den
+  dt_tepelny_spad: 40,            // °C (z 10 na 50)
+  doba_ohrevu_h: 8,               // hodin
 
-  // Spotreba tepla na ohrev 1 m3 studene → teple vody
-  teplo_ohrev_mwh_m3: 0.058,  // MWh/m3 (z 10°C na 55°C) = 58 kWh/m3
+  // Koeficienty uspor dle Excel Voda-výpočty řádky 37-41
+  koef_uspora_studena_voda: 0.30,      // recyklace šedé vody
+  koef_uspora_sporici_sprchy_sv: 0.20, // úspora studené ze spořičů sprch
+  koef_uspora_sporici_sprchy_tv: 0.35, // úspora teplé ze spořičů sprch
+  koef_rekuperace_ucinnost: 0.65,      // účinnost rekuperace TUV (65%)
 
-  // Normy spotreby na osobu/den
-  spotreba_studena_l_osoba_den: 100,
-  spotreba_tepla_l_osoba_den: 40,
+  // Cirkulace prirazka
+  prirazka_cirkulace: 0.60,  // +60% na ohřev při cirkulaci
 
-  // Rekuperace tepla z odpadni vody (DWHR)
-  rekuperace: {
-    'zadna':    { nazev: 'Bez rekuperace',             ucinnost: 0,    cena_jednotka: 0 },
-    'sprchovy': { nazev: 'Sprchovy vymenik (DWHR)',    ucinnost: 0.30, cena_jednotka: 25000 },
-    'centralni':{ nazev: 'Centralni vymenik odpadni vody', ucinnost: 0.45, cena_jednotka: 85000 },
-    'tc_odpad': { nazev: 'TC na odpadni vodu',         ucinnost: 0.60, cena_jednotka: 250000 }
-  },
+  // TC parametry (vychozi)
+  tc_cop: 3.3,               // T faktor tepelného čerpadla
+  tc_podil_ohrevu: 0.85,     // podíl TČ na ohřevu TUV
+  tc_ucinnost_vymeniku: 0.96,
+  tc_vykon_kw: 10,           // výchozí výkon TČ pro TUV
 
-  // Recyklace odpadni vody (sedova/seda voda)
-  recyklace: {
-    'zadna':     { nazev: 'Bez recyklace',                   procent_uspory: 0,    cena: 0 },
-    'destova':   { nazev: 'Zachytavani destove vody',        procent_uspory: 0.15, cena: 45000 },
-    'seda':      { nazev: 'Recyklace sede vody (umyvadla)',  procent_uspory: 0.25, cena: 180000 },
-    'kompletni': { nazev: 'Kompletni recyklace + destova',   procent_uspory: 0.40, cena: 350000 }
-  },
+  // Ceny (vychozi, editovatelne)
+  cena_tepla_gj: 3500,       // Kč/GJ (stávající ohřev)
+  cena_elektriny_kwh: 4.19,  // Kč/kWh
+  cena_studena_m3: 110,      // vodné Kč/m3
+  cena_tepla_m3: 176.46,     // cena teplé vody Kč/m3 (vodné+stočné+ohřev)
+  cena_stocne_m3: 55,        // stočné Kč/m3
+  cena_tepla_mwh: 2200,      // Kč/MWh cena tepla na TUV (z CZT nebo plynové kotelny)
 
-  // Usporne prvky
-  usporne_prvky: {
-    'sprchy':     { nazev: 'Usporne sprchove hlavice',     uspora_procent: 0.30, cena_ks: 1200 },
-    'perlatory': { nazev: 'Perlatory na baterie',         uspora_procent: 0.20, cena_ks: 350 },
-    'wc':         { nazev: 'Dvojtlacitko WC',              uspora_procent: 0.25, cena_ks: 2500 },
-    'stoupacky':  { nazev: 'Vymena stoupacek',             uspora_procent: 0.10, cena_ks: 35000 }
-  },
+  // Recyklace vody – cena čističky dle kapacity (m3/den) z Excel voda ceník podklady řádek 33
+  recyklace_cisticka: [
+    { kapacita: 0.5, cena: 730000 },
+    { kapacita: 1.0, cena: 730000 },
+    { kapacita: 1.5, cena: 730000 },
+    { kapacita: 2.0, cena: 730000 },
+    { kapacita: 2.5, cena: 1150000 },
+    { kapacita: 3.0, cena: 1150000 },
+    { kapacita: 3.5, cena: 1150000 },
+    { kapacita: 4.0, cena: 1150000 },
+    { kapacita: 4.5, cena: 1150000 },
+    { kapacita: 5.0, cena: 1150000 },
+    { kapacita: 6.0, cena: 1150000 },
+    { kapacita: 7.0, cena: 1150000 },
+    { kapacita: 8.0, cena: 2350000 },
+    { kapacita: 9.0, cena: 2350000 },
+    { kapacita: 10.0, cena: 2350000 }
+  ],
 
-  // Specificke provozy
-  wellness_litr_navstevnik: 150,
-  hotel_litr_host_noc: 200,
-  bazen_m3_doplneni_den: 0.5 // % objemu/den na doplneni
+  // Servisní náklady dle kapacity (Kč/rok) z Excel voda ceník podklady řádek 24
+  recyklace_servis: [
+    { kapacita: 0.5, servis: 10500 },
+    { kapacita: 1.0, servis: 12700 },
+    { kapacita: 1.5, servis: 14800 },
+    { kapacita: 2.0, servis: 17200 },
+    { kapacita: 2.5, servis: 18600 },
+    { kapacita: 3.0, servis: 22500 },
+    { kapacita: 3.5, servis: 24700 },
+    { kapacita: 4.0, servis: 26900 },
+    { kapacita: 4.5, servis: 28600 },
+    { kapacita: 5.0, servis: 30800 },
+    { kapacita: 6.0, servis: 35700 },
+    { kapacita: 7.0, servis: 38100 },
+    { kapacita: 8.0, servis: 41500 },
+    { kapacita: 9.0, servis: 44900 },
+    { kapacita: 10.0, servis: 48800 }
+  ],
+
+  // Rekuperace tepla – základ cena
+  rekuperace_zaklad_kc: 80000,
+
+  // Recyklace – základ cena (bez čističky – potrubí, napojení...)
+  recyklace_zaklad_kc: 650000,
+
+  // Cena připojení bytu
+  cena_pripojeni_bytu: 4500,
+
+  // Cena spořiče sprchy (Kč/ks)
+  cena_sporici_sprchy: 6500,
+
+  // Inflace pro cash flow
+  inflace: 0.035,
+
+  // Pořizovací ceny variant (odhady z Excel TUV dimenzovani)
+  tuv_cena_fve: 3500000,       // závisí na FVE výkonu - orientační
+  tuv_cena_tc: 78000,          // TC pro TUV
+  tuv_cena_tc_fve: 104000      // TC + FVE pro TUV
 };
 
-// ─── Vypocet vody ───────────────────────────────────────────────────────────
+// ─── Pomocné funkce ────────────────────────────────────────────────────────
+
+function najdiRecyklacniCenu(kapacita_m3_den) {
+  const t = VODA_DATA.recyklace_cisticka;
+  for (let i = t.length - 1; i >= 0; i--) {
+    if (kapacita_m3_den >= t[i].kapacita) return t[i].cena;
+  }
+  return t[0].cena;
+}
+
+function najdiServisniNaklady(kapacita_m3_den) {
+  const t = VODA_DATA.recyklace_servis;
+  for (let i = t.length - 1; i >= 0; i--) {
+    if (kapacita_m3_den >= t[i].kapacita) return t[i].servis;
+  }
+  return t[0].servis;
+}
+
+// ─── Hlavní výpočet ────────────────────────────────────────────────────────
 
 function vypocetVoda() {
   const container = document.getElementById('voda_vysledky');
   if (!container) return;
 
-  // Zakladni udaje
+  // === VSTUPY ===
   const pocet_osob = parseInt(document.getElementById('voda_pocet_osob')?.value) || 0;
-  const pocet_navstevniku = parseInt(document.getElementById('voda_navstevniku')?.value) || 0;
-  const studenaDenL = parseFloat(document.getElementById('voda_studena_den')?.value) || VODA_DATA.spotreba_studena_l_osoba_den;
-  const teplaDenL = parseFloat(document.getElementById('voda_tepla_den')?.value) || VODA_DATA.spotreba_tepla_l_osoba_den;
-  const zdroj_ohrevu = document.getElementById('voda_zdroj_ohrevu')?.value || 'elektro';
-  const cena_vody = parseFloat(document.getElementById('voda_cena_m3')?.value) || VODA_DATA.cena_studena_m3;
-  const cena_stocne = parseFloat(document.getElementById('voda_stocne_m3')?.value) || VODA_DATA.cena_stocne_m3;
+  const pocet_bytu = parseInt(document.getElementById('voda_pocet_bytu')?.value) || 0;
+  const norma_tuv = parseFloat(document.getElementById('voda_norma_tuv')?.value) || VODA_DATA.norma_tuv_l_os_den;
+  const dt = parseFloat(document.getElementById('voda_dt')?.value) || VODA_DATA.dt_tepelny_spad;
+  const doba_ohrevu = parseFloat(document.getElementById('voda_doba_ohrevu')?.value) || VODA_DATA.doba_ohrevu_h;
+  const cirkulace = document.getElementById('voda_cirkulace')?.value === 'ano';
+  const cop_tc = parseFloat(document.getElementById('voda_cop_tc')?.value) || VODA_DATA.tc_cop;
+  const podil_tc = parseFloat(document.getElementById('voda_podil_tc')?.value) || VODA_DATA.tc_podil_ohrevu;
 
-  // Rekuperace & recyklace
-  const typ_rekuperace = document.getElementById('voda_rekuperace')?.value || 'zadna';
-  const typ_recyklace = document.getElementById('voda_recyklace')?.value || 'zadna';
+  const cena_tepla_gj = parseFloat(document.getElementById('voda_cena_gj')?.value) || VODA_DATA.cena_tepla_gj;
+  const cena_el_kwh = parseFloat(document.getElementById('voda_cena_el')?.value) || VODA_DATA.cena_elektriny_kwh;
+  const spotreba_sv_m3 = parseFloat(document.getElementById('voda_spotreba_sv')?.value) || 0;
+  const spotreba_tv_m3 = parseFloat(document.getElementById('voda_spotreba_tv')?.value) || 0;
+  const spotreba_tepla_tuv = parseFloat(document.getElementById('voda_spotreba_tepla_tuv')?.value) || 0;
+  const cena_tepla_tuv = parseFloat(document.getElementById('voda_cena_tepla_tuv')?.value) || VODA_DATA.cena_tepla_mwh;
+  const cena_vodne = parseFloat(document.getElementById('voda_cena_vodne')?.value) || VODA_DATA.cena_studena_m3;
+  const cena_stocne = parseFloat(document.getElementById('voda_cena_stocne')?.value) || VODA_DATA.cena_stocne_m3;
 
-  // Usporne prvky
-  const chce_sprchy = document.getElementById('voda_sprchy')?.checked || false;
-  const chce_perlatory = document.getElementById('voda_perlatory')?.checked || false;
-  const chce_wc = document.getElementById('voda_wc')?.checked || false;
-  const chce_stoupacky = document.getElementById('voda_stoupacky')?.checked || false;
-  const pocet_sprch = parseInt(document.getElementById('voda_pocet_sprch')?.value) || 0;
-  const pocet_baterif = parseInt(document.getElementById('voda_pocet_baterif')?.value) || 0;
-  const pocet_wc_ks = parseInt(document.getElementById('voda_pocet_wc')?.value) || 0;
-  const pocet_stoupacek = parseInt(document.getElementById('voda_pocet_stoupacek')?.value) || 0;
+  // Úsporná opatření
+  const chce_recyklaci = document.getElementById('voda_recyklace_check')?.checked || false;
+  const chce_rekuperaci = document.getElementById('voda_rekuperace_check')?.checked || false;
+  const chce_sporici = document.getElementById('voda_sporici_check')?.checked || false;
+  const chce_destovku = document.getElementById('voda_destovka_check')?.checked || false;
 
-  if (pocet_osob <= 0) {
-    container.innerHTML = '<p class="text-muted">Zadejte pocet osob pro zobrazeni analyzy.</p>';
+  if (pocet_osob <= 0 && spotreba_sv_m3 <= 0) {
+    container.innerHTML = '<p class="text-muted">Zadejte pocet osob nebo spotreby vody.</p>';
     return;
   }
 
-  // === STAVAJICI STAV ===
-  const celkem_osob = pocet_osob + pocet_navstevniku;
-  const studena_rok_m3 = celkem_osob * studenaDenL * 365 / 1000;
-  const tepla_rok_m3 = celkem_osob * teplaDenL * 365 / 1000;
-  const celkem_voda_m3 = studena_rok_m3 + tepla_rok_m3;
+  // === TUV VÝPOČTY (dle Excel TUV vypocty) ===
+  const spotreba_tuv_l_den = pocet_osob * norma_tuv;
+  const spotreba_tuv_m3_rok = spotreba_tuv_l_den * 365 / 1000;
 
-  // Naklady za vodu
-  const naklad_vodne = Math.round(celkem_voda_m3 * cena_vody);
-  const naklad_stocne = Math.round(celkem_voda_m3 * cena_stocne);
+  // Energie na ohřev: Q = m × c × dt; c_vody = 4186 J/(kg·K) = 1.163 Wh/(kg·K)
+  const energie_ohrev_kwh_den = spotreba_tuv_l_den * dt * 1.163 / 1000;
+  const prirazka = cirkulace ? (1 + VODA_DATA.prirazka_cirkulace) : 1;
+  const energie_ohrev_kwh_rok = energie_ohrev_kwh_den * prirazka * 365;
+  const energie_ohrev_mwh_rok = energie_ohrev_kwh_rok / 1000;
 
-  // Naklady za ohrev teple vody (MWh + Kč/MWh)
-  const teplo_ohrev_mwh = tepla_rok_m3 * VODA_DATA.teplo_ohrev_mwh_m3;
-  const cena_ohrev_mwh = zdroj_ohrevu === 'plyn' ? VODA_DATA.cena_ohrev_plyn_mwh : VODA_DATA.cena_ohrev_mwh;
-  const naklad_ohrev = Math.round(teplo_ohrev_mwh * cena_ohrev_mwh);
+  // Výkon těles
+  const vykon_teles_kw = energie_ohrev_kwh_den * prirazka / doba_ohrevu;
 
-  const stavajici_celkem = naklad_vodne + naklad_stocne + naklad_ohrev;
+  // Zásobník (1.5× denní spotřeba)
+  const zasobnik_l = Math.round(spotreba_tuv_l_den * 1.5);
 
-  // === BUDOUCI STAV ===
-  let uspora_vody_procent = 0;
+  // Cena tepla: převod GJ → kWh (1 GJ = 277.78 kWh)
+  const cena_tepla_kwh = cena_tepla_gj / 277.78;
+
+  // --- Varianta 1: Stávající ohřev ---
+  const naklad_tuv_stavajici = Math.round(energie_ohrev_kwh_rok * cena_tepla_kwh);
+
+  // --- Varianta 2: Ohřev s FVE ---
+  // FVE pokryje energii na ohřev elektrickým boilerem
+  const naklad_tuv_fve = Math.round(energie_ohrev_kwh_rok * cena_el_kwh);
+
+  // --- Varianta 3: Ohřev s TČ ---
+  const energie_tc_kwh_rok = energie_ohrev_kwh_rok * podil_tc / cop_tc;
+  const naklad_tuv_tc = Math.round(energie_tc_kwh_rok * cena_el_kwh);
+
+  // --- Varianta 4: Ohřev s FVE + TČ ---
+  // TČ pokrývá podíl, FVE dodává elektřinu pro TČ
+  const naklad_tuv_fve_tc = Math.round(energie_tc_kwh_rok * cena_el_kwh * 0.3); // FVE pokryje ~70% elektřiny pro TČ
+
+  // === VODA - SPOTŘEBY A NÁKLADY (dle Excel Voda-výpočty) ===
+  // Spotřeba – buď z faktur nebo výpočet z osob
+  const sv_m3_rok = spotreba_sv_m3 > 0 ? spotreba_sv_m3 : (pocet_osob * VODA_DATA.norma_studena_l_os_den * 365 / 1000);
+  const tv_m3_rok = spotreba_tv_m3 > 0 ? spotreba_tv_m3 : spotreba_tuv_m3_rok;
+  const celkem_voda_m3 = sv_m3_rok + tv_m3_rok;
+
+  // Teplo na TUV (buď zadaná spotřeba nebo vypočtená)
+  const teplo_tuv_mwh = spotreba_tepla_tuv > 0 ? spotreba_tepla_tuv : energie_ohrev_mwh_rok;
+
+  // Stávající náklady voda
+  const naklad_vodne = Math.round(celkem_voda_m3 * cena_vodne);
+  const naklad_stocne_rok = Math.round(celkem_voda_m3 * cena_stocne);
+  const naklad_teplo_tuv = Math.round(teplo_tuv_mwh * cena_tepla_tuv);
+  const puvodni_naklady = naklad_vodne + naklad_stocne_rok + naklad_teplo_tuv;
+
+  // === ÚSPORY ===
+  let uspora_sv_kc = 0, uspora_tv_kc = 0, uspora_teplo_kc = 0, uspora_destovka_kc = 0;
   let investice = 0;
+  let servisni_naklady_rok = 0;
 
-  // Usporne prvky
-  if (chce_sprchy && pocet_sprch > 0) {
-    uspora_vody_procent += VODA_DATA.usporne_prvky.sprchy.uspora_procent * 0.4; // sprchy = cast spotreby
-    investice += pocet_sprch * VODA_DATA.usporne_prvky.sprchy.cena_ks;
-  }
-  if (chce_perlatory && pocet_baterif > 0) {
-    uspora_vody_procent += VODA_DATA.usporne_prvky.perlatory.uspora_procent * 0.2;
-    investice += pocet_baterif * VODA_DATA.usporne_prvky.perlatory.cena_ks;
-  }
-  if (chce_wc && pocet_wc_ks > 0) {
-    uspora_vody_procent += VODA_DATA.usporne_prvky.wc.uspora_procent * 0.2;
-    investice += pocet_wc_ks * VODA_DATA.usporne_prvky.wc.cena_ks;
-  }
-  if (chce_stoupacky && pocet_stoupacek > 0) {
-    uspora_vody_procent += VODA_DATA.usporne_prvky.stoupacky.uspora_procent;
-    investice += pocet_stoupacek * VODA_DATA.usporne_prvky.stoupacky.cena_ks;
+  // Recyklace šedé vody
+  if (chce_recyklaci) {
+    const uspora_sv_m3 = sv_m3_rok * VODA_DATA.koef_uspora_studena_voda;
+    uspora_sv_kc = Math.round(uspora_sv_m3 * cena_vodne);
+
+    // Kapacita čističky (m3/den)
+    const kapacita_den = celkem_voda_m3 / 365;
+    investice += najdiRecyklacniCenu(kapacita_den);
+    servisni_naklady_rok += najdiServisniNaklady(kapacita_den);
   }
 
-  // Recyklace odpadni vody
-  const recyklace = VODA_DATA.recyklace[typ_recyklace];
-  uspora_vody_procent += recyklace.procent_uspory;
-  investice += recyklace.cena;
+  // Rekuperace tepla z odpadní vody
+  if (chce_rekuperaci) {
+    const uspora_teplo_mwh = teplo_tuv_mwh * VODA_DATA.koef_rekuperace_ucinnost;
+    uspora_teplo_kc = Math.round(uspora_teplo_mwh * cena_tepla_tuv);
+    investice += VODA_DATA.rekuperace_zaklad_kc;
+  }
 
-  // Omezeni uspory na max 60%
-  uspora_vody_procent = Math.min(uspora_vody_procent, 0.60);
+  // Spořiče sprch (úspora SV + TV)
+  if (chce_sporici) {
+    const pocet_sprch = parseInt(document.getElementById('voda_pocet_sprch')?.value) || pocet_bytu;
+    uspora_sv_kc += Math.round(sv_m3_rok * VODA_DATA.koef_uspora_sporici_sprchy_sv * cena_vodne);
+    uspora_tv_kc += Math.round(tv_m3_rok * VODA_DATA.koef_uspora_sporici_sprchy_tv * cena_vodne);
+    // Úspora tepla ze snížení teplé vody
+    const uspora_tv_m3 = tv_m3_rok * VODA_DATA.koef_uspora_sporici_sprchy_tv;
+    uspora_teplo_kc += Math.round(uspora_tv_m3 * 0.058 * cena_tepla_tuv); // 0.058 MWh/m3
+    investice += pocet_sprch * VODA_DATA.cena_sporici_sprchy;
+  }
 
-  const budouci_voda_m3 = celkem_voda_m3 * (1 - uspora_vody_procent);
-  const uspora_vodne = Math.round((celkem_voda_m3 - budouci_voda_m3) * cena_vody);
-  const uspora_stocne = Math.round((celkem_voda_m3 - budouci_voda_m3) * cena_stocne);
+  // Dešťovka
+  if (chce_destovku) {
+    // Odhad: dešťovka pokryje 15% spotřeby studené vody
+    const uspora_dest_m3 = sv_m3_rok * 0.15;
+    uspora_destovka_kc = Math.round(uspora_dest_m3 * cena_vodne);
+    investice += 45000; // záchytný systém – orientační
+  }
 
-  // Rekuperace tepla z odpadni vody
-  const rekuperace = VODA_DATA.rekuperace[typ_rekuperace];
-  const uspora_ohrev_mwh = teplo_ohrev_mwh * rekuperace.ucinnost;
-  const uspora_ohrev_kc = Math.round(uspora_ohrev_mwh * cena_ohrev_mwh);
-  investice += rekuperace.cena_jednotka;
+  // Připojení bytů
+  if (pocet_bytu > 0 && (chce_recyklaci || chce_rekuperaci)) {
+    investice += pocet_bytu * VODA_DATA.cena_pripojeni_bytu;
+  }
 
-  const budouci_celkem = stavajici_celkem - uspora_vodne - uspora_stocne - uspora_ohrev_kc;
-  const uspora_celkem = stavajici_celkem - budouci_celkem;
-  const navratnost = uspora_celkem > 0 ? (investice / uspora_celkem).toFixed(1) : '---';
+  const uspora_celkem = uspora_sv_kc + uspora_tv_kc + uspora_teplo_kc + uspora_destovka_kc;
+  const cista_uspora = uspora_celkem - servisni_naklady_rok;
+  const navratnost = cista_uspora > 0 ? (investice / cista_uspora) : 0;
+  const naklady_po_realizaci = puvodni_naklady - uspora_celkem + servisni_naklady_rok;
 
-  // Uloz do stavu
+  // === ULOŽ DO STAVU ===
   OEES_STATE.case.voda = {
-    stavajici_celkem, budouci_celkem, uspora_celkem,
-    investice, navratnost,
-    uspora_vodne, uspora_stocne, uspora_ohrev_kc,
-    rekuperace_typ: typ_rekuperace, recyklace_typ: typ_recyklace
+    pocet_osob, pocet_bytu, cirkulace,
+    spotreba_tuv_m3_rok, energie_ohrev_mwh_rok, vykon_teles_kw, zasobnik_l,
+    naklad_tuv_stavajici, naklad_tuv_fve, naklad_tuv_tc, naklad_tuv_fve_tc,
+    sv_m3_rok, tv_m3_rok, celkem_voda_m3, teplo_tuv_mwh,
+    puvodni_naklady, naklady_po_realizaci,
+    uspora_sv_kc, uspora_tv_kc, uspora_teplo_kc, uspora_destovka_kc,
+    uspora_celkem, cista_uspora, investice, servisni_naklady_rok,
+    navratnost: navratnost > 0 ? parseFloat(navratnost.toFixed(1)) : 0
   };
+
+  // Přenese teplo TUV do modulu Tepelná bilance
+  const tuvEl = document.getElementById('teplo_tuv_mwh');
+  if (tuvEl && energie_ohrev_mwh_rok > 0) {
+    tuvEl.value = energie_ohrev_mwh_rok.toFixed(1);
+  }
+
+  // === RENDER VÝSLEDKY ===
+  const fmt = (v) => Math.round(v).toLocaleString('cs-CZ');
 
   container.innerHTML = `
     <div class="results-panel">
-      <h3>Analyza uspor vody</h3>
-
+      <h3>TUV – dimenzovani ohrevu</h3>
       <table class="breakdown-table">
-        <thead><tr><th>Polozka</th><th>Stavajici</th><th>Budouci</th></tr></thead>
+        <thead><tr><th>Parametr</th><th>Hodnota</th></tr></thead>
         <tbody>
-          <tr><td>Spotreba vody</td>
-              <td>${celkem_voda_m3.toFixed(0)} m3/rok</td>
-              <td>${budouci_voda_m3.toFixed(0)} m3/rok</td></tr>
-          <tr><td>Vodne</td>
-              <td>${naklad_vodne.toLocaleString('cs-CZ')} Kc</td>
-              <td>${(naklad_vodne - uspora_vodne).toLocaleString('cs-CZ')} Kc</td></tr>
-          <tr><td>Stocne</td>
-              <td>${naklad_stocne.toLocaleString('cs-CZ')} Kc</td>
-              <td>${(naklad_stocne - uspora_stocne).toLocaleString('cs-CZ')} Kc</td></tr>
-          <tr><td>Ohrev teple vody</td>
-              <td>${naklad_ohrev.toLocaleString('cs-CZ')} Kc</td>
-              <td>${(naklad_ohrev - uspora_ohrev_kc).toLocaleString('cs-CZ')} Kc</td></tr>
-          ${uspora_ohrev_kc > 0 ? `<tr><td>&nbsp;&nbsp;z toho rekuperace tepla</td><td>—</td>
-              <td class="text-success">-${uspora_ohrev_kc.toLocaleString('cs-CZ')} Kc</td></tr>` : ''}
-          <tr class="total-row">
-            <td><strong>Celkem rocne</strong></td>
-            <td><strong>${stavajici_celkem.toLocaleString('cs-CZ')} Kc</strong></td>
-            <td><strong>${budouci_celkem.toLocaleString('cs-CZ')} Kc</strong></td>
-          </tr>
+          <tr><td>Spotreba TUV</td><td>${fmt(spotreba_tuv_l_den)} l/den (${spotreba_tuv_m3_rok.toFixed(1)} m3/rok)</td></tr>
+          <tr><td>Energie na ohrev${cirkulace ? ' (vcetne cirkulace +60%)' : ''}</td><td>${energie_ohrev_mwh_rok.toFixed(1)} MWh/rok</td></tr>
+          <tr><td>Vykon teles</td><td>${vykon_teles_kw.toFixed(1)} kW</td></tr>
+          <tr><td>Doporuceny zasobnik</td><td>${fmt(zasobnik_l)} l</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:16px">Porovnani variant ohrevu TUV</h3>
+      <table class="breakdown-table">
+        <thead><tr><th>Varianta</th><th>Naklady Kc/rok</th><th>Uspora vs stavajici</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Stavajici ohrev</strong></td><td>${fmt(naklad_tuv_stavajici)}</td><td>—</td></tr>
+          <tr><td>Ohrev s FVE</td><td>${fmt(naklad_tuv_fve)}</td>
+            <td class="${naklad_tuv_stavajici - naklad_tuv_fve > 0 ? 'text-success' : ''}">${fmt(naklad_tuv_stavajici - naklad_tuv_fve)} Kc</td></tr>
+          <tr><td>Ohrev s TC (COP ${cop_tc})</td><td>${fmt(naklad_tuv_tc)}</td>
+            <td class="text-success">${fmt(naklad_tuv_stavajici - naklad_tuv_tc)} Kc</td></tr>
+          <tr><td>Ohrev s FVE + TC</td><td>${fmt(naklad_tuv_fve_tc)}</td>
+            <td class="text-success">${fmt(naklad_tuv_stavajici - naklad_tuv_fve_tc)} Kc</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:16px">Celkova analyza vody a uspor</h3>
+      <table class="breakdown-table">
+        <thead><tr><th>Polozka</th><th>Stavajici</th><th>Uspora</th></tr></thead>
+        <tbody>
+          <tr><td>Vodne (${celkem_voda_m3.toFixed(0)} m3)</td><td>${fmt(naklad_vodne)} Kc</td>
+            <td>${uspora_sv_kc > 0 ? fmt(uspora_sv_kc) + ' Kc' : '—'}</td></tr>
+          <tr><td>Stocne</td><td>${fmt(naklad_stocne_rok)} Kc</td><td>—</td></tr>
+          <tr><td>Teplo na TUV (${teplo_tuv_mwh.toFixed(1)} MWh)</td><td>${fmt(naklad_teplo_tuv)} Kc</td>
+            <td>${uspora_teplo_kc > 0 ? fmt(uspora_teplo_kc) + ' Kc' : '—'}</td></tr>
+          ${uspora_tv_kc > 0 ? `<tr><td>Uspora tepla vody (sporici sprchy)</td><td>—</td><td>${fmt(uspora_tv_kc)} Kc</td></tr>` : ''}
+          ${uspora_destovka_kc > 0 ? `<tr><td>Destovka</td><td>—</td><td>${fmt(uspora_destovka_kc)} Kc</td></tr>` : ''}
+          ${servisni_naklady_rok > 0 ? `<tr><td>Servisni naklady cisticka</td><td>—</td><td class="text-danger">-${fmt(servisni_naklady_rok)} Kc</td></tr>` : ''}
+          <tr class="total-row"><td><strong>Celkem rocne</strong></td>
+            <td><strong>${fmt(puvodni_naklady)} Kc</strong></td>
+            <td><strong>${fmt(naklady_po_realizaci)} Kc</strong></td></tr>
         </tbody>
       </table>
 
       <div class="results-grid" style="margin-top:16px">
         <div class="result-box highlight">
-          <div class="val">${uspora_celkem.toLocaleString('cs-CZ')} Kc</div>
-          <div class="lbl">Rocni uspora</div>
+          <div class="val">${fmt(cista_uspora)} Kc</div>
+          <div class="lbl">Cista uspora / rok</div>
         </div>
         <div class="result-box">
-          <div class="val">${investice.toLocaleString('cs-CZ')} Kc</div>
+          <div class="val">${fmt(investice)} Kc</div>
           <div class="lbl">Investice</div>
         </div>
         <div class="result-box">
-          <div class="val">${navratnost} let</div>
+          <div class="val">${navratnost > 0 ? navratnost.toFixed(1) : '—'} let</div>
           <div class="lbl">Navratnost</div>
-        </div>
-        <div class="result-box">
-          <div class="val">${Math.round(uspora_ohrev_kwh)} kWh</div>
-          <div class="lbl">Uspora tepla (rekuperace)</div>
         </div>
       </div>
     </div>`;
@@ -210,130 +349,145 @@ function inicializujModulVoda(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  const rekuperaceOptions = Object.entries(VODA_DATA.rekuperace).map(([key, r]) =>
-    `<option value="${key}">${r.nazev} ${r.ucinnost > 0 ? '(ucinnost ' + (r.ucinnost * 100) + '%)' : ''}</option>`
-  ).join('');
-
-  const recyklaceOptions = Object.entries(VODA_DATA.recyklace).map(([key, r]) =>
-    `<option value="${key}">${r.nazev} ${r.procent_uspory > 0 ? '(uspora ' + (r.procent_uspory * 100) + '% vody)' : ''}</option>`
-  ).join('');
-
   container.innerHTML = `
     <div class="card">
       <div class="card-title">
-        <span class="icon">&#128167;</span> Voda – analyza spotreby a uspor
+        <span class="icon">&#128167;</span> Voda + TUV – spotreby, ohrev, uspory
       </div>
 
       <div class="state-grid">
-        <!-- STAVAJICI -->
+        <!-- LEVÁ: SPOTŘEBY A PARAMETRY -->
         <div class="state-panel stavajici">
-          <h3>Stavajici spotreba</h3>
+          <h3>Stavajici stav</h3>
 
-          <div class="field">
-            <label>Pocet obyvatel / zamestnancu</label>
-            <input type="number" id="voda_pocet_osob" placeholder="100" min="0" oninput="vypocetVoda()">
+          <div class="card-subtitle">Zakladni udaje</div>
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Pocet osob</label>
+              <input type="number" id="voda_pocet_osob" placeholder="napr. 50" min="0" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Pocet bytu</label>
+              <input type="number" id="voda_pocet_bytu" placeholder="napr. 10" min="0" oninput="vypocetVoda()">
+            </div>
           </div>
 
-          <div class="field">
-            <label>Pocet navstevniku <span class="unit">osoby/den</span></label>
-            <input type="number" id="voda_navstevniku" value="0" min="0" oninput="vypocetVoda()">
+          <div class="card-subtitle">Spotreby z faktur <small class="text-muted">(ponechte prazdne pro vypocet z osob)</small></div>
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Spotreba studene vody <span class="unit">m3/rok</span></label>
+              <input type="number" id="voda_spotreba_sv" placeholder="z faktur" min="0" step="1" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Spotreba teple vody <span class="unit">m3/rok</span></label>
+              <input type="number" id="voda_spotreba_tv" placeholder="z faktur" min="0" step="1" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Spotreba tepla na TUV <span class="unit">MWh/rok</span></label>
+              <input type="number" id="voda_spotreba_tepla_tuv" placeholder="z faktur" min="0" step="0.1" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Cena tepla na TUV <span class="unit">Kc/MWh</span></label>
+              <input type="number" id="voda_cena_tepla_tuv" value="${VODA_DATA.cena_tepla_mwh}" min="0" step="50" oninput="vypocetVoda()">
+            </div>
           </div>
 
-          <div class="field">
-            <label>Spotreba studene vody <span class="unit">l/osoba/den</span></label>
-            <input type="number" id="voda_studena_den" value="${VODA_DATA.spotreba_studena_l_osoba_den}" min="0" oninput="vypocetVoda()">
+          <div class="card-subtitle">Ceny vody</div>
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Vodne <span class="unit">Kc/m3</span></label>
+              <input type="number" id="voda_cena_vodne" value="${VODA_DATA.cena_studena_m3}" min="0" step="1" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Stocne <span class="unit">Kc/m3</span></label>
+              <input type="number" id="voda_cena_stocne" value="${VODA_DATA.cena_stocne_m3}" min="0" step="1" oninput="vypocetVoda()">
+            </div>
           </div>
 
-          <div class="field">
-            <label>Spotreba teple vody <span class="unit">l/osoba/den</span></label>
-            <input type="number" id="voda_tepla_den" value="${VODA_DATA.spotreba_tepla_l_osoba_den}" min="0" oninput="vypocetVoda()">
-          </div>
-
-          <div class="field">
-            <label>Zdroj ohrevu vody</label>
-            <select id="voda_zdroj_ohrevu" onchange="vypocetVoda()">
-              <option value="elektro">Elektricky (${VODA_DATA.cena_ohrev_mwh.toLocaleString('cs-CZ')} Kc/MWh)</option>
-              <option value="plyn">Plynovy (${VODA_DATA.cena_ohrev_plyn_mwh.toLocaleString('cs-CZ')} Kc/MWh)</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Cena vodneho <span class="unit">Kc/m3</span></label>
-            <input type="number" id="voda_cena_m3" value="${VODA_DATA.cena_studena_m3}" min="0" step="1" oninput="vypocetVoda()">
-          </div>
-
-          <div class="field">
-            <label>Cena stocneho <span class="unit">Kc/m3</span></label>
-            <input type="number" id="voda_stocne_m3" value="${VODA_DATA.cena_stocne_m3}" min="0" step="1" oninput="vypocetVoda()">
+          <div class="card-subtitle">TUV – parametry ohrevu</div>
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Norma TUV <span class="unit">l/os/den</span></label>
+              <input type="number" id="voda_norma_tuv" value="${VODA_DATA.norma_tuv_l_os_den}" min="10" max="80" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Tepelny spad (dt) <span class="unit">°C</span></label>
+              <input type="number" id="voda_dt" value="${VODA_DATA.dt_tepelny_spad}" min="20" max="60" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Doba ohrevu <span class="unit">hod</span></label>
+              <input type="number" id="voda_doba_ohrevu" value="${VODA_DATA.doba_ohrevu_h}" min="2" max="24" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Cirkulace</label>
+              <select id="voda_cirkulace" onchange="vypocetVoda()">
+                <option value="ano">Ano (+60 % na ohrev)</option>
+                <option value="ne">Ne</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Cena tepla <span class="unit">Kc/GJ</span></label>
+              <input type="number" id="voda_cena_gj" value="${VODA_DATA.cena_tepla_gj}" min="0" step="100" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Cena elektriny <span class="unit">Kc/kWh</span></label>
+              <input type="number" id="voda_cena_el" value="${VODA_DATA.cena_elektriny_kwh}" min="0" step="0.1" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>COP tepelneho cerpadla</label>
+              <input type="number" id="voda_cop_tc" value="${VODA_DATA.tc_cop}" min="2" max="6" step="0.1" oninput="vypocetVoda()">
+            </div>
+            <div class="field">
+              <label>Podil TC na ohrevu <span class="unit">%</span></label>
+              <input type="number" id="voda_podil_tc" value="${Math.round(VODA_DATA.tc_podil_ohrevu * 100)}" min="0" max="100" step="5" oninput="vypocetVoda()">
+              <small class="text-muted">Obvykle 85 %</small>
+            </div>
           </div>
         </div>
 
-        <!-- USPORNA OPATRENI -->
+        <!-- PRAVÁ: ÚSPORNÁ OPATŘENÍ -->
         <div class="state-panel budouci">
           <h3>Usporna opatreni</h3>
 
           <div class="field">
-            <label>Rekuperace tepla z odpadni vody</label>
-            <select id="voda_rekuperace" onchange="vypocetVoda()">
-              ${rekuperaceOptions}
-            </select>
-            <small class="text-muted">Ziskavani tepla z odpadni vody pro predohrev studene</small>
-          </div>
-
-          <div class="field">
-            <label>Recyklace odpadni vody</label>
-            <select id="voda_recyklace" onchange="vypocetVoda()">
-              ${recyklaceOptions}
-            </select>
-            <small class="text-muted">Seda/destova voda pro WC splachovani, zalevani</small>
-          </div>
-
-          <div class="card-subtitle">Usporne prvky</div>
-
-          <div class="field">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="voda_sprchy" onchange="vypocetVoda()">
-              Usporne sprchove hlavice
+              <input type="checkbox" id="voda_recyklace_check" onchange="vypocetVoda()">
+              <strong>Recyklace odpadni vody</strong> (cisticky sede vody)
             </label>
-            <div class="form-grid-2" style="margin-top:6px">
-              <input type="number" id="voda_pocet_sprch" placeholder="Pocet ks" min="0" oninput="vypocetVoda()">
-            </div>
+            <small class="text-muted">Uspora studene vody ${Math.round(VODA_DATA.koef_uspora_studena_voda*100)} %. Cena cisticka dle kapacity (730 tis. – 2,35 mil. Kc)</small>
           </div>
 
           <div class="field">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="voda_perlatory" onchange="vypocetVoda()">
-              Perlatory na baterie
+              <input type="checkbox" id="voda_rekuperace_check" onchange="vypocetVoda()">
+              <strong>Rekuperace tepla z odpadni vody</strong>
             </label>
-            <div class="form-grid-2" style="margin-top:6px">
-              <input type="number" id="voda_pocet_baterif" placeholder="Pocet ks" min="0" oninput="vypocetVoda()">
-            </div>
+            <small class="text-muted">Ucinnost ${Math.round(VODA_DATA.koef_rekuperace_ucinnost*100)} %, zakladni cena ${VODA_DATA.rekuperace_zaklad_kc.toLocaleString('cs-CZ')} Kc</small>
           </div>
 
           <div class="field">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="voda_wc" onchange="vypocetVoda()">
-              Dvojtlacitko WC
+              <input type="checkbox" id="voda_sporici_check" onchange="vypocetVoda()">
+              <strong>Sporici sprchy</strong>
             </label>
-            <div class="form-grid-2" style="margin-top:6px">
-              <input type="number" id="voda_pocet_wc" placeholder="Pocet ks" min="0" oninput="vypocetVoda()">
+            <div style="margin-top:6px">
+              <input type="number" id="voda_pocet_sprch" placeholder="Pocet ks (default = pocet bytu)" min="0" oninput="vypocetVoda()">
             </div>
+            <small class="text-muted">Uspora SV ${Math.round(VODA_DATA.koef_uspora_sporici_sprchy_sv*100)} %, TV ${Math.round(VODA_DATA.koef_uspora_sporici_sprchy_tv*100)} %. Cena ${VODA_DATA.cena_sporici_sprchy.toLocaleString('cs-CZ')} Kc/ks</small>
           </div>
 
           <div class="field">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="voda_stoupacky" onchange="vypocetVoda()">
-              Vymena stoupacek
+              <input type="checkbox" id="voda_destovka_check" onchange="vypocetVoda()">
+              <strong>Destovka</strong> (zachytavani destove vody)
             </label>
-            <div class="form-grid-2" style="margin-top:6px">
-              <input type="number" id="voda_pocet_stoupacek" placeholder="Pocet stoupacek" min="0" oninput="vypocetVoda()">
-            </div>
+            <small class="text-muted">Pokryje cca 15 % spotreby studene vody</small>
           </div>
         </div>
       </div>
 
       <div id="voda_vysledky" style="margin-top:20px">
-        <p class="text-muted">Zadejte pocet osob pro zobrazeni analyzy.</p>
+        <p class="text-muted">Zadejte pocet osob nebo spotreby vody.</p>
       </div>
     </div>`;
 }
