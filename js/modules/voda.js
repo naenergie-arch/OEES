@@ -261,6 +261,15 @@ function vypocetVoda() {
   const navratnost = cista_uspora > 0 ? (investice / cista_uspora) : 0;
   const naklady_po_realizaci = puvodni_naklady - uspora_celkem + servisni_naklady_rok;
 
+  // === CROSS-MODULE DATA ===
+  // Elektřina pro TČ na TUV (MWh/rok) – potřeba pro modul Elektřina a FVE
+  const el_spotreba_tc_tuv_mwh = energie_tc_kwh_rok / 1000;
+  // Tepelný výkon TUV pro TC modul (kW)
+  const tepelny_vykon_tuv_kw = vykon_teles_kw;
+  // Úspora tepla z vodních opatření (rekuperace, spořiče) – pro tepelnou bilanci
+  const uspora_teplo_tuv_mwh = uspora_teplo_kc > 0 && cena_tepla_tuv > 0
+    ? uspora_teplo_kc / cena_tepla_tuv : 0;
+
   // === ULOŽ DO STAVU ===
   OEES_STATE.case.voda = {
     pocet_osob, pocet_bytu, cirkulace,
@@ -270,14 +279,34 @@ function vypocetVoda() {
     puvodni_naklady, naklady_po_realizaci,
     uspora_sv_kc, uspora_tv_kc, uspora_teplo_kc, uspora_destovka_kc,
     uspora_celkem, cista_uspora, investice, servisni_naklady_rok,
-    navratnost: navratnost > 0 ? parseFloat(navratnost.toFixed(1)) : 0
+    navratnost: navratnost > 0 ? parseFloat(navratnost.toFixed(1)) : 0,
+    // Cross-module exports
+    el_spotreba_tc_tuv_mwh,     // elektřina pro TČ na TUV (MWh/rok)
+    tepelny_vykon_tuv_kw,       // tepelný výkon TUV (kW) pro TC dimenzování
+    uspora_teplo_tuv_mwh,       // úspora tepla z vodních opatření (MWh)
+    cop_tc, podil_tc             // parametry TČ pro cross-referenci
   };
 
-  // Přenese teplo TUV do modulu Tepelná bilance
+  // === CROSS-MODULE PROPOJENÍ ===
+
+  // 1. Tepelná bilance: TUV spotřeba tepla
   const tuvEl = document.getElementById('teplo_tuv_mwh');
   if (tuvEl && energie_ohrev_mwh_rok > 0) {
     tuvEl.value = energie_ohrev_mwh_rok.toFixed(1);
   }
+
+  // 2. TC modul: pokud existuje, informuj o TUV tepelném výkonu
+  const tcSpotreba = document.getElementById('tc_spotreba');
+  if (tcSpotreba && teplo_tuv_mwh > 0 && !tcSpotreba.value) {
+    // Jen pokud uživatel ještě nezadal vlastní hodnotu
+    tcSpotreba.value = teplo_tuv_mwh.toFixed(1);
+  }
+
+  // 3. Elektřina modul: zapíšeme budoucí navýšení spotřeby z TČ na TUV
+  // (elektrina.js čte OEES_STATE.case.voda.el_spotreba_tc_tuv_mwh)
+
+  // 4. FVE modul: navýšení spotřeby elektřiny o TČ na TUV
+  // (fve.js čte OEES_STATE.case.voda.el_spotreba_tc_tuv_mwh)
 
   // === RENDER VÝSLEDKY ===
   const fmt = (v) => Math.round(v).toLocaleString('cs-CZ');
