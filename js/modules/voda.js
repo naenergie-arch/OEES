@@ -11,11 +11,11 @@ const VODA_DATA = {
   // Prumerna cena vody (vodne + stocne) 2026
   cena_studena_m3: 110,    // Kc/m3 (CR prumer)
   cena_stocne_m3: 55,      // Kc/m3 (prum. stocne)
-  cena_ohrev_kwh: 4.50,    // Kc/kWh pro ohrev vody (elektricky)
-  cena_ohrev_plyn_kwh: 2.80, // Kc/kWh pro ohrev vody (plyn)
+  cena_ohrev_mwh: 4500,      // Kc/MWh pro ohrev vody (elektricky)
+  cena_ohrev_plyn_mwh: 2800, // Kc/MWh pro ohrev vody (plyn)
 
   // Spotreba tepla na ohrev 1 m3 studene → teple vody
-  teplo_ohrev_kwh_m3: 58,  // kWh/m3 (z 10°C na 55°C)
+  teplo_ohrev_mwh_m3: 0.058,  // MWh/m3 (z 10°C na 55°C) = 58 kWh/m3
 
   // Normy spotreby na osobu/den
   spotreba_studena_l_osoba_den: 100,
@@ -95,10 +95,10 @@ function vypocetVoda() {
   const naklad_vodne = Math.round(celkem_voda_m3 * cena_vody);
   const naklad_stocne = Math.round(celkem_voda_m3 * cena_stocne);
 
-  // Naklady za ohrev teple vody
-  const teplo_ohrev_kwh = tepla_rok_m3 * VODA_DATA.teplo_ohrev_kwh_m3;
-  const cena_ohrev = zdroj_ohrevu === 'plyn' ? VODA_DATA.cena_ohrev_plyn_kwh : VODA_DATA.cena_ohrev_kwh;
-  const naklad_ohrev = Math.round(teplo_ohrev_kwh * cena_ohrev);
+  // Naklady za ohrev teple vody (MWh + Kč/MWh)
+  const teplo_ohrev_mwh = tepla_rok_m3 * VODA_DATA.teplo_ohrev_mwh_m3;
+  const cena_ohrev_mwh = zdroj_ohrevu === 'plyn' ? VODA_DATA.cena_ohrev_plyn_mwh : VODA_DATA.cena_ohrev_mwh;
+  const naklad_ohrev = Math.round(teplo_ohrev_mwh * cena_ohrev_mwh);
 
   const stavajici_celkem = naklad_vodne + naklad_stocne + naklad_ohrev;
 
@@ -138,8 +138,8 @@ function vypocetVoda() {
 
   // Rekuperace tepla z odpadni vody
   const rekuperace = VODA_DATA.rekuperace[typ_rekuperace];
-  const uspora_ohrev_kwh = teplo_ohrev_kwh * rekuperace.ucinnost;
-  const uspora_ohrev_kc = Math.round(uspora_ohrev_kwh * cena_ohrev);
+  const uspora_ohrev_mwh = teplo_ohrev_mwh * rekuperace.ucinnost;
+  const uspora_ohrev_kc = Math.round(uspora_ohrev_mwh * cena_ohrev_mwh);
   investice += rekuperace.cena_jednotka;
 
   const budouci_celkem = stavajici_celkem - uspora_vodne - uspora_stocne - uspora_ohrev_kc;
@@ -252,8 +252,8 @@ function inicializujModulVoda(containerId) {
           <div class="field">
             <label>Zdroj ohrevu vody</label>
             <select id="voda_zdroj_ohrevu" onchange="vypocetVoda()">
-              <option value="elektro">Elektricky (${VODA_DATA.cena_ohrev_kwh} Kc/kWh)</option>
-              <option value="plyn">Plynovy (${VODA_DATA.cena_ohrev_plyn_kwh} Kc/kWh)</option>
+              <option value="elektro">Elektricky (${VODA_DATA.cena_ohrev_mwh.toLocaleString('cs-CZ')} Kc/MWh)</option>
+              <option value="plyn">Plynovy (${VODA_DATA.cena_ohrev_plyn_mwh.toLocaleString('cs-CZ')} Kc/MWh)</option>
             </select>
           </div>
 

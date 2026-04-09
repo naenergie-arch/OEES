@@ -61,6 +61,19 @@
   ══════════════════════════════════════════════════════════════ -->
   <div class="module-panel active" id="panel-objekt">
 
+    <!-- SEKCE: Načtení existujícího případu -->
+    <div class="card" style="margin-bottom:16px;background:rgba(100,180,255,0.06);border:1px solid rgba(100,180,255,0.2)">
+      <div class="card-title" style="font-size:0.9rem">&#128194; Načíst existující případ</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <select id="case-select" style="min-width:280px">
+          <option value="">-- Klikněte "Načíst seznam" --</option>
+        </select>
+        <button class="btn btn-secondary" onclick="nacistSeznamPripadu()" style="font-size:0.82rem">&#128260; Načíst seznam</button>
+        <button class="btn btn-primary" onclick="nacistPripad()" style="font-size:0.82rem">&#128194; Otevřít případ</button>
+        <span id="case-load-status" style="font-size:0.8rem;color:var(--text-muted)"></span>
+      </div>
+    </div>
+
     <!-- SEKCE: Obecne informace -->
     <div class="card">
       <div class="card-title"><span class="icon">&#128203;</span> Obecne informace</div>
@@ -230,23 +243,29 @@
       </div>
     </div>
 
-    <!-- SEKCE: Vyber technologii -->
-    <div class="card">
-      <div class="card-title"><span class="icon">&#9881;</span> Vyber technologii a dalsich uspornych reseni</div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-        <label class="checkbox-label"><input type="checkbox" id="m_elektrina" checked> &#9889; Elektrina & distribuce</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_fve" checked> &#9728;&#65039; FVE - fotovoltaika</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_baterie"> &#128267; Bateriove uloziste</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_ev"> &#128663; Nabijecka elektromobilu</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_plyn"> &#128293; Plyn (komodita)</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_voda"> &#128167; Voda</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_tc"> &#10052;&#65039; Tepelne cerpadlo</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_kogenerace"> &#9889; Kogeneracni jednotka</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_plyn_kotel"> &#128293; Plynovy kotel</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_inteligentni"> &#129302; Inteligentni rizeni</label>
-        <label class="checkbox-label"><input type="checkbox" id="m_distribuce_opt"> &#128200; Optimalizace distribuce</label>
+    <!-- SEKCE: Vyber technologii (plovouci – presouva se na spodek aktivni zalozky) -->
+    <div id="moduly-checkboxy" class="card" style="border:1px dashed var(--primary);background:rgba(100,180,255,0.04)">
+      <div class="card-title"><span class="icon">&#9881;</span> Aktivni moduly / zalozky</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <label class="checkbox-label"><input type="checkbox" id="m_elektrina" checked onchange="sestavAktivniKroky()"> &#9889; Elektrina & distribuce</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_fve" checked onchange="sestavAktivniKroky()"> &#9728;&#65039; FVE - fotovoltaika</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_baterie" onchange="sestavAktivniKroky()"> &#128267; Bateriove uloziste</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_ev" onchange="sestavAktivniKroky()"> &#128663; Nabijecka elektromobilu</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_plyn" onchange="sestavAktivniKroky()"> &#128293; Plyn (komodita)</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_voda" onchange="sestavAktivniKroky()"> &#128167; Voda</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_teplo" onchange="sestavAktivniKroky()"> &#128293; Tepelna bilance</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_tc" onchange="sestavAktivniKroky()"> &#10052;&#65039; Tepelne cerpadlo</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_kogenerace" onchange="sestavAktivniKroky()"> &#9889; Kogeneracni jednotka</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_plyn_kotel" onchange="sestavAktivniKroky()"> &#128293; Plynovy kotel</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_teplarna" onchange="sestavAktivniKroky()"> &#127981; Teplarna (CZT)</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_inteligentni" onchange="sestavAktivniKroky()"> &#129302; Inteligentni rizeni</label>
+        <label class="checkbox-label"><input type="checkbox" id="m_distribuce_opt" onchange="sestavAktivniKroky()"> &#128200; Optimalizace distribuce</label>
       </div>
+    </div>
 
+    <!-- SEKCE: Doplnujici nastaveni -->
+    <div class="card">
+      <div class="card-title"><span class="icon">&#9881;</span> Doplnujici nastaveni</div>
       <div class="form-grid-2">
         <div class="field">
           <label>Bude pozadano o dotace <span class="required">*</span></label>
@@ -329,6 +348,13 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════
+       TEPELNA BILANCE
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-teplo">
+    <div id="modul_teplo_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
        TEPELNE CERPADLO
   ══════════════════════════════════════════════════════ -->
   <div class="module-panel" id="panel-tc">
@@ -347,6 +373,13 @@
   ══════════════════════════════════════════════════════ -->
   <div class="module-panel" id="panel-kotel">
     <div id="modul_kotel_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TEPLARNA (CZT)
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-teplarna">
+    <div id="modul_teplarna_container"></div>
   </div>
 
   <!-- ══════════════════════════════════════════════════════
@@ -402,13 +435,12 @@
       <div id="souhrn_obsah">
         <p class="text-muted">Dokončete předchozí kroky pro zobrazení souhrnných výsledků.</p>
       </div>
-      <div id="upresneni-wrap" style="display:none;margin-top:16px">
-        <button class="btn btn-primary" onclick="otevritUpresneniStudie()" id="btn-upresneni-studie">&#128203; Upřesnění finální studie</button>
-      </div>
-      <div class="btn-row" style="margin-top:24px">
-        <button class="btn btn-primary" onclick="ulozCase()">&#128190; Uložit případ do databáze</button>
-        <button class="btn btn-secondary" onclick="generujStudii()">&#128196; Generovat předběžnou studii</button>
-        <button class="btn btn-secondary" onclick="resetFormStav()">&#128260; Nový případ</button>
+      <div class="btn-row" style="margin-top:24px;flex-wrap:wrap;gap:8px">
+        <button class="btn btn-primary" onclick="ulozCase()">&#128190; Ulozit pripad</button>
+        <button class="btn btn-primary" onclick="generujStudii()">&#128196; Generovat predbeznou studii</button>
+        <button class="btn btn-secondary" id="btn-upresneni-studie" onclick="otevritUpresneniStudie()" style="display:none">&#128203; Upravit finalní studii</button>
+        <button class="btn btn-secondary" id="btn-finalni-studie" onclick="generujFinalniStudii()" style="display:none">&#128214; Generovat finalni studii</button>
+        <button class="btn btn-secondary" onclick="resetFormStav()">&#128260; Novy pripad</button>
       </div>
     </div>
   </div>
@@ -416,24 +448,44 @@
 </div><!-- /oees-wrap -->
 
 <!-- ══════════════════════════════════════════════════════
+     STICKY SOUHRNNA LISTA
+══════════════════════════════════════════════════════ -->
+<div id="sticky-souhrn" class="sticky-souhrn">
+  <div class="sticky-souhrn-inner">
+    <div id="sticky-moduly" class="sticky-moduly"></div>
+    <div class="sticky-cisla">
+      <span class="sticky-item">Investice: <strong id="sticky-investice">---</strong></span>
+      <span class="sticky-item">Uspora: <strong id="sticky-uspora">---</strong></span>
+      <span class="sticky-item">Navratnost: <strong id="sticky-navratnost">---</strong></span>
+    </div>
+    <div class="sticky-akce">
+      <button class="btn btn-sm btn-primary" onclick="zobrazNavrh()">Zobrazit navrh</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
      SKRIPTY
 ══════════════════════════════════════════════════════ -->
-<script src="js/data/tarify.js?v=3"></script>
+<script src="js/data/tarify.js?v=20260408c"></script>
 <script src="js/modules/elektrina.js?v=2"></script>
-<script src="js/modules/distribuce.js?v=3"></script>
+<script src="js/modules/distribuce.js?v=20260408c"></script>
 <script src="js/modules/voda.js?v=2"></script>
 <script src="js/modules/fve.js?v=2"></script>
 <script src="js/modules/plyn.js?v=2"></script>
+<script src="js/modules/teplo.js?v=1"></script>
 <script src="js/modules/tc.js?v=2"></script>
-<script src="js/modules/kogenerace.js?v=2"></script>
+<script src="js/admin/svr-zb.js?v=1"></script>
+<script src="js/modules/kogenerace.js?v=3"></script>
 <script src="js/modules/kotel.js?v=2"></script>
+<script src="js/modules/teplarna.js?v=1"></script>
 <script src="js/modules/baterie.js?v=2"></script>
 <script src="js/modules/ev.js?v=2"></script>
 <script src="js/modules/inteligentni.js?v=2"></script>
 <script src="js/modules/dotace.js?v=2"></script>
 <script src="js/modules/financovani.js?v=2"></script>
 <script src="js/modules/poznamky.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/app.js?v=20260408c"></script>
 
 </body>
 </html>

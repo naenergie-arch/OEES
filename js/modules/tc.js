@@ -44,14 +44,14 @@ const TC_DATA = {
   // Sazba pro TC (D57d – dvoutarifni)
   sazba_tc: 'D57d',
 
-  // Ceny zdroju tepla pro porovnani (Kc/kWh tepla)
+  // Ceny zdroju tepla pro porovnani (Kc/MWh paliva)
   zdroje: {
-    'plyn_kotel':     { nazev: 'Plynovy kondenzacni kotel', ucinnost: 0.97, cena_kwh_paliva: 1.35 },
-    'plyn_stary':     { nazev: 'Plynovy kotel (stary)',     ucinnost: 0.85, cena_kwh_paliva: 1.35 },
-    'elektro_primo':  { nazev: 'Elektricke primotopy',      ucinnost: 1.00, cena_kwh_paliva: 3.80 },
-    'elektro_akum':   { nazev: 'Elektro akumulacni',        ucinnost: 0.95, cena_kwh_paliva: 2.50 },
-    'uhli':           { nazev: 'Uhli (automaticky kotel)',   ucinnost: 0.82, cena_kwh_paliva: 0.95 },
-    'drevo':          { nazev: 'Drevo/pelety',               ucinnost: 0.85, cena_kwh_paliva: 1.10 }
+    'plyn_kotel':     { nazev: 'Plynovy kondenzacni kotel', ucinnost: 0.97, cena_mwh_paliva: 1350 },
+    'plyn_stary':     { nazev: 'Plynovy kotel (stary)',     ucinnost: 0.85, cena_mwh_paliva: 1350 },
+    'elektro_primo':  { nazev: 'Elektricke primotopy',      ucinnost: 1.00, cena_mwh_paliva: 3800 },
+    'elektro_akum':   { nazev: 'Elektro akumulacni',        ucinnost: 0.95, cena_mwh_paliva: 2500 },
+    'uhli':           { nazev: 'Uhli (automaticky kotel)',   ucinnost: 0.82, cena_mwh_paliva: 950 },
+    'drevo':          { nazev: 'Drevo/pelety',               ucinnost: 0.85, cena_mwh_paliva: 1100 }
   },
 
   // Dotace NZU 2026 (orientacni)
@@ -70,13 +70,24 @@ function vypocetTC() {
 
   const tepelna_ztrata = parseFloat(document.getElementById('tc_ztrata')?.value) || 0;
   const spotreba_tepla = parseFloat(document.getElementById('tc_spotreba')?.value) || 0;
+  const podil_tepla = parseFloat(document.getElementById('tc_podil_tepla')?.value) || 0;
   const typ_tc = document.getElementById('tc_typ')?.value || 'vzduch_voda';
   const stavajici_zdroj = document.getElementById('tc_zdroj')?.value || 'plyn_kotel';
   const chceDotaci = document.getElementById('tc_dotace')?.checked || false;
   const maFVE = document.getElementById('tc_fve')?.checked || false;
 
-  if (spotreba_tepla <= 0 && tepelna_ztrata <= 0) {
-    container.innerHTML = '<p class="text-muted">Vyplnte spotrebu tepla nebo tepelnou ztratu.</p>';
+  // Prevezmi z tepelne bilance pokud je aktivni
+  const bilance = OEES_STATE.case.teplo;
+  if (bilance && bilance.mwh_tc > 0) {
+    const el = document.getElementById('tc_podil_tepla');
+    if (el && parseFloat(el.value) !== bilance.mwh_tc) el.value = bilance.mwh_tc;
+  }
+
+  // Priorita: podil_tepla > spotreba > ztrata
+  const potreba_mwh_raw = podil_tepla > 0 ? podil_tepla : (spotreba_tepla > 0 ? spotreba_tepla : (tepelna_ztrata * 2200 / 1000));
+
+  if (potreba_mwh_raw <= 0) {
+    container.innerHTML = '<p class="text-muted">Vyplnte podil tepla, spotrebu nebo tepelnou ztratu.</p>';
     return;
   }
 
@@ -84,11 +95,11 @@ function vypocetTC() {
   const zdroj = TC_DATA.zdroje[stavajici_zdroj];
 
   // Rocni potreba tepla (MWh)
-  const potreba_mwh = spotreba_tepla > 0 ? spotreba_tepla : (tepelna_ztrata * 2200 / 1000); // 2200 otopnych hodin
+  const potreba_mwh = potreba_mwh_raw;
 
   // Stavajici naklady
   const potreba_paliva_mwh = potreba_mwh / zdroj.ucinnost;
-  const naklad_stavajici = Math.round(potreba_paliva_mwh * zdroj.cena_kwh_paliva * 1000);
+  const naklad_stavajici = Math.round(potreba_paliva_mwh * zdroj.cena_mwh_paliva);
 
   // TC naklady (elektrina pro pohon TC)
   const spotreba_tc_mwh = potreba_mwh / tc.cop_prumer;

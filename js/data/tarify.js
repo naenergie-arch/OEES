@@ -537,7 +537,74 @@ const OPTIMALIZACE_NAKLADY = {
   prace_hodiny:   2        // h – odhadovaný čas na přepojení HDO
 };
 
+// ─── TARIFY VN (vysoké napětí) 2026 ──────────────────────────────────────────
+// Zdroj: ERÚ cenové rozhodnutí č. 13/2025 (VVN/VN), upraveno o pokles ~5,8 % pro 2026
+
+// ── VN tarify – ERÚ cenové rozhodnutí (odhad 2026 z ERÚ 2025 +/- korekce) ──
+// Zdroje: ERÚ rozhodnutí 7/2023, 11/2024, SPČR analýza, ČEZ/EGD/PRE ceníky
+//
+// POJMY:
+// - Rezervovaný příkon = technický limit přípojky (smlouva o připojení), pevný
+// - Roční rezervovaná kapacita (RK) = smluvní max 1/4h výkon na celý rok, levnější
+// - Měsíční rezervovaná kapacita (MK) = dodatečná kapacita nad RK pro daný měsíc, dražší (~10%)
+// - Pravidlo: RK + MK <= Rezervovaný příkon
+// - Optimalizace: nastavit RK na celoroční minimum, MK přidávat jen v měsících se špičkou
+
+const TARIFY_VN_2026 = {
+
+  spolecne: {
+    systemove_sluzby: 164.24,   // Kč/MWh – ERÚ 2026
+    ote_mesic:        2.39,     // Kč/OM/měsíc
+    poze:             0,        // Kč/MWh – od 2026 hradí stát
+    dan_elektriny:    28.30,    // Kč/MWh
+    dph:              0.21,
+    // Penalizace za překročení
+    penalizace_kapacita_nasobek: 1.5,   // 1,5× měsíční sazba RK za MW překročení RK
+    penalizace_prikon_nasobek:   4,     // 4× roční sazba RK za MW překročení příkonu
+    penalizace_jalovy_kvarh:     0.44,  // Kč/kVArh (= 440 Kč/MVArh)
+    ucinek_min: 0.95,                   // min cos φ (neutrální pásmo 0,95–1,00)
+    ucinek_max: 1.00,
+    // Orientační cena kompenzačního rozváděče
+    kompenzace_kc_kvar: 350             // Kč/kVAr instalovaného výkonu
+  },
+
+  CEZ: {
+    nazev: "ČEZ Distribuce",
+    region: "Čechy, severní a střední Morava",
+    // Ceny za rezervovanou kapacitu (Kč/MW/měsíc)
+    rocni_kapacita:    243700,   // Roční RK – levnější, fixní 12 měsíců
+    mesicni_kapacita:  267000,   // Měsíční MK – dražší (~10%), flexibilní
+    pouziti_siti:      88.50,    // Kč/MWh (2025: silný pokles ~53%)
+    jednoslozkova:     4035.45,  // Kč/MWh – bez měření příkonu
+    // Penalizace za překročení
+    penalizace_prekroceni_rk_kw:  365,  // Kč/kW/měs za překročení RK (1,5× rocni/1000)
+    penalizace_prekroceni_prikon_kw: 975  // Kč/kW/měs za překročení příkonu (4× rocni/1000)
+  },
+
+  EGD: {
+    nazev: "EG.D (E.ON Distribuce)",
+    region: "Jihozápad a jihovýchod ČR",
+    rocni_kapacita:    212260,
+    mesicni_kapacita:  237500,
+    pouziti_siti:      88.20,
+    jednoslozkova:     3538.84,
+    penalizace_prekroceni_rk_kw:  318,
+    penalizace_prekroceni_prikon_kw: 849
+  },
+
+  PRE: {
+    nazev: "PREdistribuce",
+    region: "Praha a okolí",
+    rocni_kapacita:    240950,
+    mesicni_kapacita:  266700,
+    pouziti_siti:      55.30,
+    jednoslozkova:     3925.31,
+    penalizace_prekroceni_rk_kw:  361,
+    penalizace_prekroceni_prikon_kw: 964
+  }
+};
+
 // Export pro použití v ostatních modulech
 if (typeof module !== 'undefined') {
-  module.exports = { TARIFY_2026, vypocetDistribuce, SPOTREBICE_TYPY, INVESTICE_KW_SAZBA, MIN_KW_SAZBA, OPTIMALIZACE_NAKLADY };
+  module.exports = { TARIFY_2026, vypocetDistribuce, SPOTREBICE_TYPY, INVESTICE_KW_SAZBA, MIN_KW_SAZBA, OPTIMALIZACE_NAKLADY, TARIFY_VN_2026 };
 }

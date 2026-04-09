@@ -124,6 +124,7 @@ const OEES_STATE = {
 // ─── Konfigurace API ─────────────────────────────────────────────────────────
 const OEES_CONFIG = {
   api_url: 'https://hook.eu1.make.com/9ci7k98pjk7b8es3o8rp0dm7mu8wpqgu',
+  gas_url: 'https://script.google.com/macros/s/AKfycbzRTSFxU28lSpMCS5JKD9yBtuj_YCRqXzx61KDS7SctpbnKx6Y4hkpZZDKz6blYJRU/exec',
   api_version: 'v1'
 };
 
@@ -135,15 +136,17 @@ const OEES_MODULY = [
   { id: 'voda',         label: 'Voda',                     icon: '4',  checkbox: 'm_voda',          panelId: 'panel-voda',          initFn: 'inicializujModulVoda',          containerId: 'modul_voda_container' },
   { id: 'fve',          label: 'FVE',                      icon: '5',  checkbox: 'm_fve',           panelId: 'panel-fve',           initFn: 'inicializujModulFVE',           containerId: 'modul_fve_container' },
   { id: 'plyn',         label: 'Plyn',                     icon: '6',  checkbox: 'm_plyn',          panelId: 'panel-plyn',          initFn: 'inicializujModulPlyn',          containerId: 'modul_plyn_container' },
-  { id: 'tc',           label: 'Tepelné čerpadlo',         icon: '7',  checkbox: 'm_tc',            panelId: 'panel-tc',            initFn: 'inicializujModulTC',            containerId: 'modul_tc_container' },
-  { id: 'kogenerace',   label: 'Kogenerační jednotka',     icon: '8',  checkbox: 'm_kogenerace',    panelId: 'panel-kogenerace',    initFn: 'inicializujModulKogenerace',    containerId: 'modul_kogenerace_container' },
-  { id: 'kotel',        label: 'Plynový kotel',            icon: '9',  checkbox: 'm_plyn_kotel',    panelId: 'panel-kotel',         initFn: 'inicializujModulKotel',         containerId: 'modul_kotel_container' },
-  { id: 'baterie',      label: 'Bateriové úložiště',       icon: '10', checkbox: 'm_baterie',       panelId: 'panel-baterie',       initFn: 'inicializujModulBaterie',       containerId: 'modul_baterie_container' },
-  { id: 'ev',           label: 'Nabíječka elektromobilů',  icon: '11', checkbox: 'm_ev',            panelId: 'panel-ev',            initFn: 'inicializujModulEV',            containerId: 'modul_ev_container' },
-  { id: 'inteligentni', label: 'Inteligentní řízení',      icon: '12', checkbox: 'm_inteligentni',  panelId: 'panel-inteligentni',  initFn: 'inicializujModulInteligentni',  containerId: 'modul_inteligentni_container' },
-  { id: 'dotace',       label: 'Dotace',                   icon: '13', checkbox: null,              panelId: 'panel-dotace',        initFn: 'inicializujModulDotace',        containerId: 'modul_dotace_container' },
-  { id: 'financovani',  label: 'Financování',              icon: '14', checkbox: null,              panelId: 'panel-financovani',   initFn: 'inicializujModulFinancovani',   containerId: 'modul_financovani_container' },
-  { id: 'poznamky',     label: 'Poznámky',                 icon: '15', checkbox: null,              panelId: 'panel-poznamky',      initFn: 'inicializujModulPoznamky',      containerId: 'modul_poznamky_container' },
+  { id: 'teplo',        label: 'Tepelná bilance',           icon: '7',  checkbox: 'm_teplo',         panelId: 'panel-teplo',         initFn: 'inicializujModulTeplo',         containerId: 'modul_teplo_container' },
+  { id: 'tc',           label: 'Tepelné čerpadlo',         icon: '8',  checkbox: 'm_tc',            panelId: 'panel-tc',            initFn: 'inicializujModulTC',            containerId: 'modul_tc_container' },
+  { id: 'kogenerace',   label: 'Kogenerační jednotka',     icon: '9',  checkbox: 'm_kogenerace',    panelId: 'panel-kogenerace',    initFn: 'inicializujModulKogenerace',    containerId: 'modul_kogenerace_container' },
+  { id: 'kotel',        label: 'Plynový kotel',            icon: '10', checkbox: 'm_plyn_kotel',    panelId: 'panel-kotel',         initFn: 'inicializujModulKotel',         containerId: 'modul_kotel_container' },
+  { id: 'teplarna',     label: 'Teplárna (CZT)',           icon: '11', checkbox: 'm_teplarna',      panelId: 'panel-teplarna',      initFn: 'inicializujModulTeplarna',      containerId: 'modul_teplarna_container' },
+  { id: 'baterie',      label: 'Bateriové úložiště',       icon: '12', checkbox: 'm_baterie',       panelId: 'panel-baterie',       initFn: 'inicializujModulBaterie',       containerId: 'modul_baterie_container' },
+  { id: 'ev',           label: 'Nabíječka elektromobilů',  icon: '13', checkbox: 'm_ev',            panelId: 'panel-ev',            initFn: 'inicializujModulEV',            containerId: 'modul_ev_container' },
+  { id: 'inteligentni', label: 'Inteligentní řízení',      icon: '14', checkbox: 'm_inteligentni',  panelId: 'panel-inteligentni',  initFn: 'inicializujModulInteligentni',  containerId: 'modul_inteligentni_container' },
+  { id: 'dotace',       label: 'Dotace',                   icon: '15', checkbox: null,              panelId: 'panel-dotace',        initFn: 'inicializujModulDotace',        containerId: 'modul_dotace_container' },
+  { id: 'financovani',  label: 'Financování',              icon: '16', checkbox: null,              panelId: 'panel-financovani',   initFn: 'inicializujModulFinancovani',   containerId: 'modul_financovani_container' },
+  { id: 'poznamky',     label: 'Poznámky',                 icon: '17', checkbox: null,              panelId: 'panel-poznamky',      initFn: 'inicializujModulPoznamky',      containerId: 'modul_poznamky_container' },
   { id: 'vysledky',     label: 'Výsledky',                 icon: '✓',  checkbox: null,              panelId: 'panel-vysledky' }
 ];
 
@@ -259,11 +262,25 @@ function aktualizujNavTlacitka(index) {
   const panel = document.getElementById(modul.panelId);
   if (!panel) return;
 
+  // Presun checkboxy modulu na spodek aktivniho panelu
+  const cbBlock = document.getElementById('moduly-checkboxy');
+  if (cbBlock) {
+    if (modul.id === 'vysledky') {
+      cbBlock.style.display = 'none';
+    } else {
+      cbBlock.style.display = '';
+      panel.appendChild(cbBlock);
+    }
+  }
+
   // Najdi btn-row v panelu
   let btnRow = panel.querySelector('.nav-btn-row');
   if (!btnRow) {
     btnRow = document.createElement('div');
     btnRow.className = 'btn-row nav-btn-row';
+    panel.appendChild(btnRow);
+  } else {
+    // Zajisti ze btn-row je vzdy na konci (za checkboxy)
     panel.appendChild(btnRow);
   }
 
@@ -278,30 +295,23 @@ function aktualizujNavTlacitka(index) {
     btnRow.appendChild(btnZpet);
   }
 
-  // Tlacitko Dalsi
+  // Tlacitko Dalsi / Zobrazit vysledky
   if (index < kroky.length - 1) {
     const btnDalsi = document.createElement('button');
-    const isLast = (index === kroky.length - 2);
-    btnDalsi.className = 'btn btn-primary';
-    btnDalsi.innerHTML = 'Pokračovat &rarr;';
+    const isPreLast = (index === kroky.length - 2);
+    if (isPreLast) {
+      // Posledni krok pred vysledky → zelene tlacitko
+      btnDalsi.className = 'btn btn-success';
+      btnDalsi.innerHTML = '&#128202; Zobrazit výsledky';
+    } else {
+      btnDalsi.className = 'btn btn-primary';
+      btnDalsi.innerHTML = 'Pokračovat &rarr;';
+    }
     btnDalsi.onclick = () => {
       if (index === 0) sestavAktivniKroky();
       prejiNaKrokIndex(index + 1);
     };
     btnRow.appendChild(btnDalsi);
-  }
-
-  // Tlacitko Zobrazit vysledky – na kazde zalozce krome vysledku
-  if (modul.id !== 'vysledky') {
-    const btnVysledky = document.createElement('button');
-    btnVysledky.className = 'btn btn-success';
-    btnVysledky.innerHTML = '&#128202; Zobrazit výsledky';
-    btnVysledky.onclick = () => {
-      if (index === 0) sestavAktivniKroky();
-      const vysledkyIdx = kroky.findIndex(k => k.id === 'vysledky');
-      if (vysledkyIdx >= 0) prejiNaKrokIndex(vysledkyIdx);
-    };
-    btnRow.appendChild(btnVysledky);
   }
 }
 
@@ -344,9 +354,11 @@ function sestavSouhrn() {
     { id: 'voda',         icon: '&#128167;',        nazev: 'Voda' },
     { id: 'fve',          icon: '&#9728;&#65039;',  nazev: 'Fotovoltaika (FVE)' },
     { id: 'plyn',         icon: '&#128293;',        nazev: 'Plyn' },
+    { id: 'teplo',        icon: '&#128293;',        nazev: 'Tepelná bilance' },
     { id: 'tc',           icon: '&#10052;&#65039;', nazev: 'Tepelné čerpadlo' },
     { id: 'kogenerace',   icon: '&#9889;',          nazev: 'Kogenerační jednotka' },
     { id: 'kotel',        icon: '&#128293;',        nazev: 'Plynový kotel' },
+    { id: 'teplarna',     icon: '&#127981;',        nazev: 'Teplárna (CZT)' },
     { id: 'baterie',      icon: '&#128267;',        nazev: 'Bateriové úložiště' },
     { id: 'ev',           icon: '&#128663;',        nazev: 'Nabíječka elektromobilů' },
     { id: 'inteligentni', icon: '&#129302;',        nazev: 'Inteligentní řízení' }
@@ -365,69 +377,66 @@ function sestavSouhrn() {
     if (!aktivniIds.includes(s.id)) return;
 
     const data = c[s.id];
+    const dv = data?.vysledek || data; // moduly ukladaji bud primo nebo do .vysledek
     let uspora = 0, investice = 0, navratnost = '-';
 
-    if (data && data.vysledek) {
-      // Elektrina
-      if (s.id === 'elektrina' && data.vysledek.uspora_kc_rok !== undefined) {
-        uspora = data.vysledek.uspora_kc_rok;
-      }
-      // Distribuce
-      if (s.id === 'distribuce' && data.vysledek.uspora_kc_rok !== undefined) {
-        uspora = data.vysledek.uspora_kc_rok;
-      }
-      // FVE
-      if (s.id === 'fve') {
-        uspora = data.vysledek.rocni_prinos_r1 || 0;
-        investice = data.vysledek.investice_kc || 0;
-        navratnost = data.vysledek.navratnost_let ? data.vysledek.navratnost_let + ' let' : '-';
-      }
-      // Voda
-      if (s.id === 'voda') {
-        uspora = data.uspora_celkem || data.vysledek?.uspora_celkem || 0;
-        investice = data.investice || data.vysledek?.investice || 0;
-        navratnost = data.navratnost || data.vysledek?.navratnost || '-';
-        if (typeof navratnost === 'number') navratnost = navratnost.toFixed(1) + ' let';
-      }
-      // Plyn
-      if (s.id === 'plyn') {
-        uspora = data.uspora || data.vysledek?.uspora || 0;
-      }
-      // TC
-      if (s.id === 'tc') {
-        uspora = data.uspora || 0;
-        investice = data.investice_po_dotaci || data.investice_prumer || 0;
-        navratnost = data.navratnost ? data.navratnost.toFixed(1) + ' let' : '-';
-      }
-      // Kogenerace
-      if (s.id === 'kogenerace') {
-        uspora = data.rocni_uspora || 0;
-        investice = data.investice || 0;
-        navratnost = data.navratnost ? data.navratnost.toFixed(1) + ' let' : '-';
-      }
-      // Kotel
-      if (s.id === 'kotel') {
-        uspora = data.rocni_uspora || 0;
-        investice = data.investice || 0;
-        navratnost = data.navratnost ? data.navratnost.toFixed(1) + ' let' : '-';
-      }
-      // Baterie
-      if (s.id === 'baterie') {
-        uspora = data.uspora_rok || 0;
-        investice = data.investice_po_dotaci || data.investice || 0;
-        navratnost = data.navratnost ? data.navratnost.toFixed(1) + ' let' : '-';
-      }
-      // EV
-      if (s.id === 'ev') {
-        uspora = data.uspora_provoz || 0;
-        investice = data.investice_po_dotaci || data.investice || 0;
-        navratnost = data.navratnost ? data.navratnost.toFixed(1) + ' let' : '-';
-      }
-      // Inteligentni
-      if (s.id === 'inteligentni') {
-        uspora = data.rocni_uspora || 0;
-        investice = data.investice || 0;
-        navratnost = data.navratnost ? data.navratnost.toFixed(1) + ' let' : '-';
+    if (dv) {
+      switch (s.id) {
+        case 'elektrina':
+          uspora = dv.uspora_kc_rok || 0;
+          break;
+        case 'distribuce':
+          uspora = (dv.uspora_nn || 0) + (dv.uspora_vn || 0) + (dv.uspora_kc_rok || 0);
+          break;
+        case 'fve':
+          uspora = dv.uspora_celkem || dv.rocni_prinos_r1 || 0;
+          investice = dv.investice_celkem || dv.investice_kc || 0;
+          navratnost = dv.navratnost_let ? dv.navratnost_let + ' let' : (dv.navratnost ? dv.navratnost + ' let' : '-');
+          break;
+        case 'voda':
+          uspora = dv.uspora_celkem || dv.uspora || 0;
+          investice = dv.investice || 0;
+          if (dv.navratnost) navratnost = (typeof dv.navratnost === 'number' ? dv.navratnost.toFixed(1) : dv.navratnost) + ' let';
+          break;
+        case 'plyn':
+          uspora = dv.uspora || 0;
+          break;
+        case 'teplo':
+          // Tepelna bilance = informacni, nema vlastni usporu
+          break;
+        case 'tc':
+          uspora = dv.uspora || 0;
+          investice = dv.investice_po_dotaci || dv.investice_prumer || 0;
+          if (dv.navratnost && dv.navratnost !== '---') navratnost = dv.navratnost + ' let';
+          break;
+        case 'kogenerace':
+          uspora = dv.rocni_uspora || 0;
+          investice = dv.investice || 0;
+          if (dv.navratnost) navratnost = (typeof dv.navratnost === 'number' ? dv.navratnost.toFixed(1) : dv.navratnost) + ' let';
+          break;
+        case 'kotel':
+          uspora = dv.rocni_uspora || 0;
+          investice = dv.investice || 0;
+          if (dv.navratnost) navratnost = (typeof dv.navratnost === 'number' ? dv.navratnost.toFixed(1) : dv.navratnost) + ' let';
+          break;
+        case 'teplarna':
+          uspora = dv.uspora || 0;
+          break;
+        case 'baterie':
+          uspora = dv.uspora_rok || dv.uspora || 0;
+          investice = dv.investice_po_dotaci || dv.investice || 0;
+          if (dv.navratnost) navratnost = (typeof dv.navratnost === 'number' ? dv.navratnost.toFixed(1) : dv.navratnost) + ' let';
+          break;
+        case 'ev':
+          uspora = dv.uspora_provoz || 0;
+          investice = dv.investice_po_dotaci || dv.investice || 0;
+          if (dv.navratnost) navratnost = (typeof dv.navratnost === 'number' ? dv.navratnost.toFixed(1) : dv.navratnost) + ' let';
+          break;
+        case 'inteligentni':
+          uspora = dv.rocni_uspora || dv.uspora || 0;
+          investice = dv.investice || 0;
+          if (dv.navratnost) navratnost = (typeof dv.navratnost === 'number' ? dv.navratnost.toFixed(1) : dv.navratnost) + ' let';
+          break;
       }
     }
 
@@ -509,80 +518,178 @@ function sestavSouhrn() {
 
   document.getElementById('souhrn_obsah').innerHTML = html;
 
-  // Upresneni finalni studie – pouze pro ESO3/admin a az po ulozeni pripadu
-  const uprWrap = document.getElementById('upresneni-wrap');
-  if (uprWrap) {
-    const adminSession = JSON.parse(localStorage.getItem('oees_admin_session') || '{}');
-    const prava = adminSession.prava || {};
-    const isAdmin = Object.values(prava).some(v => v === 'admin');
-    const maStudii = !!OEES_STATE.case.id;
-    uprWrap.style.display = (isAdmin && maStudii) ? 'block' : 'none';
-  }
+  // Tlacitka studie – zobraz po ulozeni pripadu
+  const maStudii = !!OEES_STATE.case.id;
+  const btnUpr = document.getElementById('btn-upresneni-studie');
+  const btnFin = document.getElementById('btn-finalni-studie');
+  if (btnUpr) btnUpr.style.display = maStudii ? '' : 'none';
+  if (btnFin) btnFin.style.display = maStudii ? '' : 'none';
 }
 
 // ─── Upresneni finalni studie (otevreni z vysledku) ─────────────────────────
 
 function otevritUpresneniStudie() {
-  // Otevre admin panel na zalozce upresneni s aktualnim pripadem
   const caseId = OEES_STATE.case.id;
   const url = 'admin.html?tab=upresneni' + (caseId ? '&case=' + encodeURIComponent(caseId) : '');
   window.open(url, '_blank');
 }
 
+function generujFinalniStudii() {
+  const caseId = OEES_STATE.case.id;
+  if (!caseId) { alert('Nejdrive ulozte pripad.'); return; }
+  // TODO: volani GAS/Make.com pro generovani finalni studie
+  alert('Generovani finalni studie pro pripad ' + caseId + ' – pripravujeme.');
+}
+
 // ─── Ulozeni pripadu do OEES API / Google Sheets ─────────────────────────────
+
+// Získej nastavení aktivních záložek jako string
+function getAktivniModulyString() {
+  const ids = [];
+  OEES_MODULY.forEach(m => {
+    if (!m.checkbox) return;
+    const cb = document.getElementById(m.checkbox);
+    if (cb && cb.checked) ids.push(m.id);
+  });
+  return ids.join(',');
+}
 
 async function ulozCase() {
   const btn = event.target;
   btn.disabled = true;
   btn.innerHTML = '<span class="loader"></span> Ukládám...';
 
-  const caseId = 'CASE-' + Date.now().toString().slice(-8);
+  const caseId = OEES_STATE.case.id || ('CASE-' + Date.now().toString().slice(-8));
 
   const caseData = {
+    action:        'case_save',
     case_id:       caseId,
-    created:       new Date().toISOString(),
+    created:       OEES_STATE.case.created || new Date().toISOString(),
     company:       document.getElementById('o_nazev')?.value || '',
     contact_email: document.getElementById('o_email')?.value || '',
     contact_phone: document.getElementById('o_telefon')?.value || '',
     address:       [document.getElementById('o_sidlo_ulice')?.value, document.getElementById('o_sidlo_obec')?.value, document.getElementById('o_sidlo_psc')?.value].filter(Boolean).join(', '),
     type:          document.getElementById('o_typ')?.value || '',
+    aktivni_moduly: getAktivniModulyString(),
     data_json:     JSON.stringify(OEES_STATE.case)
   };
 
   try {
-    // Pokus s CORS
-    const response = await fetch(OEES_CONFIG.api_url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch(OEES_CONFIG.gas_url, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(caseData)
     });
-
     if (response.ok) {
-      OEES_STATE.case.id = caseId;
-      btn.innerHTML = '&#10004; Uloženo – Case #' + caseId;
-      btn.style.background = 'var(--success)';
-      return;
+      const text = await response.text();
+      try { const res = JSON.parse(text); if (res.case_id) caseData.case_id = res.case_id; } catch(_){}
     }
-    throw new Error('HTTP ' + response.status);
-  } catch (err) {
-    // Fallback: no-cors mod (data se odeslou, ale nedostaneme odpoved)
+  } catch (_) {
+    // Fallback no-cors
     try {
-      await fetch(OEES_CONFIG.api_url, {
-        method: 'POST',
-        mode: 'no-cors',
+      await fetch(OEES_CONFIG.gas_url, {
+        method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(caseData)
       });
-      OEES_STATE.case.id = caseId;
-      btn.innerHTML = '&#10004; Odesláno – Case #' + caseId;
-      btn.style.background = 'var(--success)';
-    } catch (err2) {
-      OEES_STATE.case.id = caseId;
-      btn.innerHTML = '&#9888; Offline – Case #' + caseId;
-      btn.style.background = 'var(--warning)';
-      btn.disabled = false;
-      console.log('OEES API chyba:', err2.message, 'Data:', caseData);
+    } catch (_) {}
+  }
+
+  // Také odeslat do Make webhooku (stávající integrace)
+  try {
+    await fetch(OEES_CONFIG.api_url, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(caseData)
+    });
+  } catch (_) {}
+
+  OEES_STATE.case.id = caseData.case_id;
+  OEES_STATE.case.created = caseData.created;
+  btn.innerHTML = '&#10004; Uloženo – ' + caseData.case_id;
+  btn.style.background = 'var(--success)';
+  setTimeout(() => { btn.disabled = false; btn.innerHTML = '💾 Uložit případ do databáze'; btn.style.background = ''; }, 4000);
+}
+
+// ─── Načítání případů ────────────────────────────────────────────────────────
+
+async function nacistSeznamPripadu() {
+  const sel = document.getElementById('case-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Načítám...</option>';
+  try {
+    const resp = await fetch(OEES_CONFIG.gas_url + '?action=cases_list');
+    if (resp.ok) {
+      const res = JSON.parse(await resp.text());
+      if (res.success && res.data) {
+        sel.innerHTML = '<option value="">-- Vyberte případ --</option>';
+        res.data.forEach(c => {
+          const label = (c.company || 'Bez názvu') + ' (' + (c.case_id || '') + ')';
+          sel.innerHTML += `<option value="${c.case_id}">${label}</option>`;
+        });
+        return;
+      }
     }
+  } catch (_) {}
+  sel.innerHTML = '<option value="">Nepodařilo se načíst</option>';
+}
+
+async function nacistPripad() {
+  const sel = document.getElementById('case-select');
+  const caseId = sel?.value;
+  if (!caseId) return;
+
+  const statusEl = document.getElementById('case-load-status');
+  if (statusEl) statusEl.textContent = 'Načítám...';
+
+  try {
+    const resp = await fetch(OEES_CONFIG.gas_url + '?action=case_detail&caseId=' + encodeURIComponent(caseId));
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const res = JSON.parse(await resp.text());
+    if (!res.success || !res.data) throw new Error(res.error || 'Data nenalezena');
+
+    const row = res.data;
+
+    // Obnov data_json do OEES_STATE.case
+    if (row.data_json) {
+      try {
+        const parsed = JSON.parse(row.data_json);
+        Object.assign(OEES_STATE.case, parsed);
+      } catch(_) {}
+    }
+    OEES_STATE.case.id = row.case_id;
+    OEES_STATE.case.created = row.created;
+
+    // Obnov formulář objektu
+    if (row.company) { const el = document.getElementById('o_nazev'); if (el) el.value = row.company; }
+    if (row.contact_email) { const el = document.getElementById('o_email'); if (el) el.value = row.contact_email; }
+    if (row.contact_phone) { const el = document.getElementById('o_telefon'); if (el) el.value = row.contact_phone; }
+    if (row.address) {
+      const parts = row.address.split(', ');
+      const el1 = document.getElementById('o_sidlo_ulice'); if (el1 && parts[0]) el1.value = parts[0];
+      const el2 = document.getElementById('o_sidlo_obec');  if (el2 && parts[1]) el2.value = parts[1];
+      const el3 = document.getElementById('o_sidlo_psc');   if (el3 && parts[2]) el3.value = parts[2];
+    }
+
+    // Obnov checkboxy záložek
+    if (row.aktivni_moduly) {
+      const ids = row.aktivni_moduly.split(',');
+      OEES_MODULY.forEach(m => {
+        if (!m.checkbox) return;
+        const cb = document.getElementById(m.checkbox);
+        if (cb) cb.checked = ids.includes(m.id);
+      });
+      sestavAktivniKroky();
+    }
+
+    if (statusEl) statusEl.textContent = 'Načteno: ' + (row.company || row.case_id);
+    statusEl.style.color = 'var(--success)';
+
+    // Přejdi na první záložku
+    prejiNaKrokIndex(0);
+
+  } catch (err) {
+    if (statusEl) { statusEl.textContent = 'Chyba: ' + err.message; statusEl.style.color = 'var(--danger,#e74c3c)'; }
   }
 }
 
@@ -649,14 +756,66 @@ function obnovFormStav() {
 }
 
 function zapniAutosave() {
-  // Uloz pri kazde zmene vstupniho pole
-  document.addEventListener('input', ulozFormStav);
-  document.addEventListener('change', ulozFormStav);
+  // Uloz pri kazde zmene vstupniho pole + aktualizuj sticky souhrn
+  document.addEventListener('input', () => { ulozFormStav(); aktualizujStickySouhrn(); });
+  document.addEventListener('change', () => { ulozFormStav(); aktualizujStickySouhrn(); });
 }
 
 function resetFormStav() {
   localStorage.removeItem(OEES_STORAGE_KEY);
   location.reload();
+}
+
+// ─── Sticky souhrn – validace modulu a celkove cisla ────────────────────────
+
+// Kazdy modul definuje svou validaci: vraci {ok, investice, uspora}
+const MODUL_VALIDACE = {
+  fve:        () => { const s = OEES_STATE.case.fve; return { ok: !!(s && s.vykon_kwp > 0), investice: s?.investice_celkem || 0, uspora: s?.uspora_celkem || 0 }; },
+  tc:         () => { const s = OEES_STATE.case.tc; return { ok: !!(s && s.potreba_mwh > 0), investice: s?.investice_po_dotaci || 0, uspora: s?.uspora || 0 }; },
+  kogenerace: () => { const s = OEES_STATE.case.kogenerace; return { ok: !!(s && s.tepelny_vykon > 0), investice: s?.investice || 0, uspora: s?.uspora_celkem || 0 }; },
+  kotel:      () => { const s = OEES_STATE.case.kotel; return { ok: !!(s && s.vykon_kw > 0), investice: s?.investice || 0, uspora: s?.uspora || 0 }; },
+  ev:         () => { const s = OEES_STATE.case.ev; return { ok: !!(s && s.najezd_km > 0), investice: s?.investice_po_dotaci || 0, uspora: s?.uspora_provoz || 0 }; },
+  baterie:    () => { const s = OEES_STATE.case.baterie; return { ok: !!(s && s.kapacita_kwh > 0), investice: s?.investice || 0, uspora: s?.uspora || 0 }; },
+  teplo:      () => { const s = OEES_STATE.case.teplo; return { ok: !!(s && s.celkem_mwh > 0), investice: 0, uspora: 0 }; },
+  distribuce: () => { const s = OEES_STATE.case.distribuce; return { ok: !!(s && (s.uspora_nn || s.uspora_vn)), investice: 0, uspora: (s?.uspora_nn || 0) + (s?.uspora_vn || 0) }; },
+  voda:       () => { const s = OEES_STATE.case.voda; return { ok: !!(s && s.spotreba_m3 > 0), investice: 0, uspora: s?.uspora || 0 }; },
+  teplarna:     () => { const s = OEES_STATE.case.teplarna; return { ok: !!(s && s.spotreba_mwh > 0), investice: 0, uspora: s?.uspora || 0 }; },
+  inteligentni: () => { const s = OEES_STATE.case.inteligentni; return { ok: !!(s && s.uspora > 0), investice: s?.investice || 0, uspora: s?.uspora || 0 }; }
+};
+
+function aktualizujStickySouhrn() {
+  const modulyEl = document.getElementById('sticky-moduly');
+  const invEl = document.getElementById('sticky-investice');
+  const uspEl = document.getElementById('sticky-uspora');
+  const navrEl = document.getElementById('sticky-navratnost');
+  if (!modulyEl) return;
+
+  let celkInvestice = 0, celkUspora = 0;
+  let badges = '';
+
+  for (const m of OEES_STATE.aktivniModuly || []) {
+    if (m.id === 'objekt' || m.id === 'vysledky' || m.id === 'dotace' || m.id === 'financovani' || m.id === 'poznamky' || m.id === 'plyn' || m.id === 'elektrina') continue;
+    const val = MODUL_VALIDACE[m.id];
+    if (!val) continue;
+    const r = val();
+    const cls = r.ok ? 'ok' : 'warn';
+    const icon = r.ok ? '&#10003;' : '&#33;';
+    const idx = OEES_STATE.aktivniModuly.findIndex(x => x.id === m.id);
+    badges += `<span class="sticky-modul-badge ${cls}" onclick="prejiNaKrokIndex(${idx})" title="${m.label}">${icon} ${m.label}</span>`;
+    celkInvestice += r.investice;
+    celkUspora += r.uspora;
+  }
+
+  modulyEl.innerHTML = badges;
+  invEl.textContent = celkInvestice > 0 ? celkInvestice.toLocaleString('cs-CZ') + ' Kc' : '---';
+  uspEl.textContent = celkUspora > 0 ? celkUspora.toLocaleString('cs-CZ') + ' Kc/rok' : '---';
+  navrEl.textContent = (celkUspora > 0 && celkInvestice > 0) ? (celkInvestice / celkUspora).toFixed(1) + ' let' : '---';
+}
+
+function zobrazNavrh() {
+  // Prejdi na Vysledky
+  const idx = OEES_STATE.aktivniModuly.findIndex(m => m.id === 'vysledky');
+  if (idx >= 0) prejiNaKrokIndex(idx);
 }
 
 // ─── Inicializace pri nacteni stranky ────────────────────────────────────────
@@ -680,6 +839,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Zapni automaticke ukladani
   zapniAutosave();
+
+  // Prvni aktualizace sticky souhrnu
+  setTimeout(aktualizujStickySouhrn, 200);
 
   console.log('OEES Kalkulator v0.3.0 | NaEnergie.cz | ' + new Date().toLocaleDateString('cs-CZ'));
 });

@@ -91,50 +91,25 @@ const KGJ_DATA = {
   instalace_procent: 0.15
 };
 
-// ─── SVR Data (dle SVR_kalkulace_KGJ.xlsx) ──────────────────────────────────
-// Lookup tabulka indexovana dle tepelneho vykonu KGJ
-// Regulacni rozsah = 50% el. vykonu (KGJ reguluje 50-100% nom. vykonu)
-// Investice SVR se pocita z TEPELNEHO vykonu (akumulacni nadrz)
-const SVR_LOOKUP = [
-  { tep_kw: 100,  el_kw: 62,   inv_kc_kw: 6000, kap_platba: 250, hod_kap: 2500, akt_platba: 700,  hod_akt: 80  },
-  { tep_kw: 150,  el_kw: 95,   inv_kc_kw: 6000, kap_platba: 250, hod_kap: 2500, akt_platba: 700,  hod_akt: 80  },
-  { tep_kw: 200,  el_kw: 130,  inv_kc_kw: 4500, kap_platba: 280, hod_kap: 3000, akt_platba: 700,  hod_akt: 120 },
-  { tep_kw: 250,  el_kw: 167,  inv_kc_kw: 4500, kap_platba: 280, hod_kap: 3000, akt_platba: 800,  hod_akt: 120 },
-  { tep_kw: 300,  el_kw: 205,  inv_kc_kw: 3200, kap_platba: 310, hod_kap: 3500, akt_platba: 800,  hod_akt: 160 },
-  { tep_kw: 350,  el_kw: 244,  inv_kc_kw: 3200, kap_platba: 310, hod_kap: 3500, akt_platba: 800,  hod_akt: 160 },
-  { tep_kw: 400,  el_kw: 285,  inv_kc_kw: 3200, kap_platba: 310, hod_kap: 3500, akt_platba: 800,  hod_akt: 160 },
-  { tep_kw: 450,  el_kw: 328,  inv_kc_kw: 2500, kap_platba: 340, hod_kap: 4000, akt_platba: 900,  hod_akt: 200 },
-  { tep_kw: 500,  el_kw: 372,  inv_kc_kw: 2500, kap_platba: 340, hod_kap: 4000, akt_platba: 900,  hod_akt: 200 },
-  { tep_kw: 550,  el_kw: 418,  inv_kc_kw: 2500, kap_platba: 340, hod_kap: 4000, akt_platba: 900,  hod_akt: 200 },
-  { tep_kw: 600,  el_kw: 465,  inv_kc_kw: 2500, kap_platba: 340, hod_kap: 4000, akt_platba: 900,  hod_akt: 200 },
-  { tep_kw: 650,  el_kw: 514,  inv_kc_kw: 2000, kap_platba: 360, hod_kap: 4500, akt_platba: 900,  hod_akt: 240 },
-  { tep_kw: 700,  el_kw: 565,  inv_kc_kw: 2000, kap_platba: 360, hod_kap: 4500, akt_platba: 900,  hod_akt: 240 },
-  { tep_kw: 750,  el_kw: 617,  inv_kc_kw: 2000, kap_platba: 360, hod_kap: 4500, akt_platba: 1000, hod_akt: 240 },
-  { tep_kw: 800,  el_kw: 670,  inv_kc_kw: 2000, kap_platba: 360, hod_kap: 4500, akt_platba: 1000, hod_akt: 240 },
-  { tep_kw: 850,  el_kw: 725,  inv_kc_kw: 1700, kap_platba: 380, hod_kap: 5000, akt_platba: 1000, hod_akt: 280 },
-  { tep_kw: 900,  el_kw: 782,  inv_kc_kw: 1700, kap_platba: 380, hod_kap: 5000, akt_platba: 1000, hod_akt: 280 },
-  { tep_kw: 950,  el_kw: 840,  inv_kc_kw: 1700, kap_platba: 380, hod_kap: 5000, akt_platba: 1000, hod_akt: 280 },
-  { tep_kw: 1000, el_kw: 900,  inv_kc_kw: 1700, kap_platba: 380, hod_kap: 5000, akt_platba: 1000, hod_akt: 280 }
-];
+// ─── SVR + Zeleny bonus: dynamicke data z admin nebo vychozi ────────────────
+// Data jsou definovana v js/admin/svr-zb.js (SVR_LOOKUP_DEFAULT, ZB_SAZBY_DEFAULT)
+// a mohou byt prepasana z ADMIN DB pres getSvrLookup() / getZbSazby()
 
-// ─── Zeleny bonus KVET 2026 (ERU c. 10/2025) ───────────────────────────────
-// Sazby zalezi na ELEKTRICKEM vykonu KGJ
 function zelenyBonusSazba(el_vykon_kw) {
-  if (el_vykon_kw <= 50)  return 1894; // do 50 kWe
-  if (el_vykon_kw <= 200) return 1921; // 50-200 kWe
-  return 957;                           // 200-999 kWe
+  const sazby = (typeof getZbSazby === 'function') ? getZbSazby() : ZB_SAZBY_DEFAULT;
+  for (const s of sazby) {
+    if (el_vykon_kw >= s.el_od && el_vykon_kw <= s.el_do) return s.sazba;
+  }
+  return sazby[sazby.length - 1]?.sazba || 957;
 }
 
-// ─── SVR interpolace ────────────────────────────────────────────────────────
-// Najdi nejblizsi radek v SVR_LOOKUP dle tepelneho vykonu, interpoluj
 function getSvrParams(tep_vykon_kw) {
-  if (tep_vykon_kw < SVR_LOOKUP[0].tep_kw) return null; // prilis maly pro SVR
+  const lookup = (typeof getSvrLookup === 'function') ? getSvrLookup() : SVR_LOOKUP_DEFAULT;
+  if (tep_vykon_kw < lookup[0].tep_kw) return null;
 
-  // Najdi dva sousedni radky pro interpolaci
-  for (let i = 0; i < SVR_LOOKUP.length - 1; i++) {
-    if (tep_vykon_kw >= SVR_LOOKUP[i].tep_kw && tep_vykon_kw <= SVR_LOOKUP[i + 1].tep_kw) {
-      const a = SVR_LOOKUP[i];
-      const b = SVR_LOOKUP[i + 1];
+  for (let i = 0; i < lookup.length - 1; i++) {
+    if (tep_vykon_kw >= lookup[i].tep_kw && tep_vykon_kw <= lookup[i + 1].tep_kw) {
+      const a = lookup[i], b = lookup[i + 1];
       const t = (tep_vykon_kw - a.tep_kw) / (b.tep_kw - a.tep_kw);
       return {
         inv_kc_kw:  Math.round(a.inv_kc_kw  + (b.inv_kc_kw  - a.inv_kc_kw)  * t),
@@ -146,8 +121,7 @@ function getSvrParams(tep_vykon_kw) {
       };
     }
   }
-  // Nad 1000 kW = pouzij posledni radek
-  const last = SVR_LOOKUP[SVR_LOOKUP.length - 1];
+  const last = lookup[lookup.length - 1];
   return {
     inv_kc_kw: last.inv_kc_kw, kap_platba: last.kap_platba,
     hod_kap: last.hod_kap, akt_platba: last.akt_platba,
@@ -163,8 +137,16 @@ function vypocetKogenerace() {
 
   const typ = document.getElementById('kgj_typ')?.value || 'kgj_50_83';
   const pocet = parseInt(document.getElementById('kgj_pocet')?.value) || 1;
-  const podil_tepla = parseFloat(document.getElementById('kgj_podil_tepla')?.value) || 0;
+  let podil_tepla = parseFloat(document.getElementById('kgj_podil_tepla')?.value) || 0;
   const provozni_hodiny = parseInt(document.getElementById('kgj_hodiny')?.value) || 0;
+
+  // Prevezmi z tepelne bilance pokud je aktivni
+  const bilance_kgj = OEES_STATE.case.teplo;
+  if (bilance_kgj && bilance_kgj.mwh_kgj > 0) {
+    const el = document.getElementById('kgj_podil_tepla');
+    if (el && parseFloat(el.value) !== bilance_kgj.mwh_kgj) el.value = bilance_kgj.mwh_kgj;
+    podil_tepla = bilance_kgj.mwh_kgj;
+  }
   const naddimenzovani = parseFloat(document.getElementById('kgj_naddimenzovani')?.value) || 0;
   const cena_plynu = parseFloat(document.getElementById('kgj_cena_plynu')?.value) || 1350;
   const cena_elektriny = parseFloat(document.getElementById('kgj_cena_el')?.value) || 4500;

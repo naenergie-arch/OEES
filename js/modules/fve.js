@@ -128,7 +128,8 @@ function ekonomikaFVE(vstup) {
     vykupni_cena_kc_mwh,      // cena výkupu přetoků (Kč/MWh), typicky 2000-3000
     degrace_rocni = 0.005,    // roční degradace výkonu (0.5%)
     inflace_energie = 0.04,   // roční zdražení energie (4%)
-    horizont_let = 25
+    horizont_let = 25,
+    pretoky_detail = null
   } = vstup;
 
   const investice = Math.round(kwp * cenInstallace(kwp));
@@ -173,7 +174,9 @@ function ekonomikaFVE(vstup) {
     roi_25let_procenta: roi_procenta,
     celkovy_prinos_25l: Math.round(celkovy_prinos),
     cistý_zisk_25l:     Math.round(celkovy_prinos - investice),
-    cashflow
+    cashflow,
+    cena_elektriny_kc_mwh,
+    pretoky_detail
   };
 }
 
@@ -320,44 +323,61 @@ function inicializujModulFVE(containerId) {
             </select>
           </div>
 
-          <div class="card-subtitle" style="margin-top:12px">Přetoky – kam jde přebytečná výroba</div>
+          <div class="card-subtitle" style="margin-top:12px">Přetoky – kam jde přebytečná výroba (MWh/rok)</div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px">
+            Celkový přebytek se automaticky dopočte z výroby − vlastní spotřeby.
+            Rozdělte přebytek mezi cíle. Zbytek jde do sítě.
+          </p>
 
-          <div class="field">
-            <label>Přetoky do baterie <span class="unit">%</span></label>
-            <input type="number" id="f_pretok_baterie" value="0" min="0" max="100" step="5"
-                   oninput="spocitejFVE()">
-            <div class="hint">Závisí na kapacitě baterie a počtu cyklů</div>
-          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="field">
+              <label>Přetoky do baterie <span class="unit">MWh/rok</span></label>
+              <input type="number" id="f_pretok_baterie" value="0" min="0" step="0.1"
+                     oninput="spocitejFVE()">
+              <div class="hint">Úspora = koupená elektřina ze sítě</div>
+            </div>
+            <div class="field">
+              <label>Úspora z baterie <span class="unit">Kč/MWh</span></label>
+              <input type="number" id="f_cena_baterie" value="5800" min="0" step="100"
+                     oninput="spocitejFVE()">
+              <div class="hint">= cena elektřiny ze sítě (ušetřeno)</div>
+            </div>
 
-          <div class="field">
-            <label>Přetoky do akumulace (ohřev TUV) <span class="unit">%</span></label>
-            <input type="number" id="f_pretok_akumulace" value="0" min="0" max="100" step="5"
-                   oninput="spocitejFVE()">
-            <div class="hint">Výkon ohřevu, hodiny provozu, počet dní</div>
-          </div>
+            <div class="field">
+              <label>Přetoky do akumulace (ohřev TUV) <span class="unit">MWh/rok</span></label>
+              <input type="number" id="f_pretok_akumulace" value="0" min="0" step="0.1"
+                     oninput="spocitejFVE()">
+              <div class="hint">Nahrazuje plyn/elektřinu na ohřev vody</div>
+            </div>
+            <div class="field">
+              <label>Úspora z akumulace <span class="unit">Kč/MWh</span></label>
+              <input type="number" id="f_cena_akumulace" value="2800" min="0" step="100"
+                     oninput="spocitejFVE()">
+              <div class="hint">= cena nahrazeného paliva (plyn ~2800)</div>
+            </div>
 
-          <div class="field">
-            <label>Prodej do sítě <span class="unit">%</span></label>
-            <input type="number" id="f_pretok_sit" value="100" min="0" max="100" step="5"
-                   oninput="spocitejFVE()">
-          </div>
+            <div class="field">
+              <label>Prodej do en. komunity <span class="unit">MWh/rok</span></label>
+              <input type="number" id="f_pretok_komunita" value="0" min="0" step="0.1"
+                     oninput="spocitejFVE()">
+            </div>
+            <div class="field">
+              <label>Cena prodeje do komunity <span class="unit">Kč/MWh</span></label>
+              <input type="number" id="f_cena_komunita" value="3500" min="0" step="100"
+                     oninput="spocitejFVE()">
+            </div>
 
-          <div class="field">
-            <label>Výkupní cena přetoků (prodej do sítě) <span class="unit">Kč/MWh</span></label>
-            <input type="number" id="f_vykup" value="2500" min="0" step="100"
-                   oninput="spocitejFVE()">
-          </div>
-
-          <div class="field">
-            <label>Prodej do energetické komunity <span class="unit">%</span></label>
-            <input type="number" id="f_pretok_komunita" value="0" min="0" max="100" step="5"
-                   oninput="spocitejFVE()">
-          </div>
-
-          <div class="field">
-            <label>Cena prodeje do komunity <span class="unit">Kč/MWh</span></label>
-            <input type="number" id="f_cena_komunita" value="3500" min="0" step="100"
-                   oninput="spocitejFVE()">
+            <div class="field">
+              <label>Prodej do sítě <span class="unit">MWh/rok</span></label>
+              <input type="number" id="f_pretok_sit" value="0" min="0" step="0.1"
+                     oninput="spocitejFVE()" readonly style="background:rgba(255,255,255,0.05)">
+              <div class="hint">Automaticky = přebytek − baterie − akumulace − komunita</div>
+            </div>
+            <div class="field">
+              <label>Výkupní cena (prodej do sítě) <span class="unit">Kč/MWh</span></label>
+              <input type="number" id="f_vykup" value="2500" min="0" step="100"
+                     oninput="spocitejFVE()">
+            </div>
           </div>
 
           <div class="field">
@@ -419,6 +439,14 @@ function spocitejFVE() {
   const baterie     = document.getElementById('f_baterie')?.value || 'ne';
   const inflace     = parseFloat(document.getElementById('f_inflace')?.value) || 4;
 
+  // Přetoky v MWh/rok
+  const pretok_baterie_mwh   = parseFloat(document.getElementById('f_pretok_baterie')?.value) || 0;
+  const pretok_akumulace_mwh = parseFloat(document.getElementById('f_pretok_akumulace')?.value) || 0;
+  const pretok_komunita_mwh  = parseFloat(document.getElementById('f_pretok_komunita')?.value) || 0;
+  const cena_baterie_mwh     = parseFloat(document.getElementById('f_cena_baterie')?.value) || 5800;
+  const cena_akumulace_mwh   = parseFloat(document.getElementById('f_cena_akumulace')?.value) || 2800;
+  const cena_komunita_mwh    = parseFloat(document.getElementById('f_cena_komunita')?.value) || 3500;
+
   if (kwp <= 0) return;
 
   // Korekce self-consumption pro baterii
@@ -433,31 +461,56 @@ function spocitejFVE() {
   // Self-consumption
   const sc = vypocetSelfConsumption(vyroba, spotreba * 1000, sc_ratio);
 
-  // Ekonomika
+  // Přetoky – rozdělit celkový přebytek (MWh)
+  const celkovy_prebytekMWh = sc.pretoky_kwh / 1000;
+  const alokovaneMWh = pretok_baterie_mwh + pretok_akumulace_mwh + pretok_komunita_mwh;
+  const pretok_sit_mwh = Math.max(0, celkovy_prebytekMWh - alokovaneMWh);
+  // Aktualizuj pole "prodej do sítě" (readonly)
+  const sitEl = document.getElementById('f_pretok_sit');
+  if (sitEl) sitEl.value = Math.round(pretok_sit_mwh * 10) / 10;
+
+  // Ekonomika s rozdělenými přetoky
   const ekonomika = ekonomikaFVE({
     kwp,
     vyroba_kwh_rok:        vyroba,
     vlastni_spotreba_kwh:  sc.vlastni_spotreba_kwh,
     pretoky_kwh:           sc.pretoky_kwh,
     cena_elektriny_kc_mwh: cena_el,
-    vykupni_cena_kc_mwh:   vykup,
+    // Vážená výkupní cena přetoků
+    vykupni_cena_kc_mwh:   celkovy_prebytekMWh > 0
+      ? Math.round((pretok_baterie_mwh * cena_baterie_mwh + pretok_akumulace_mwh * cena_akumulace_mwh
+          + pretok_komunita_mwh * cena_komunita_mwh + pretok_sit_mwh * vykup) / celkovy_prebytekMWh)
+      : vykup,
     inflace_energie:        inflace / 100,
-    horizont_let:           25
+    horizont_let:           25,
+    // Detailní přetoky pro výsledky
+    pretoky_detail: {
+      baterie:   { mwh: pretok_baterie_mwh,   cena: cena_baterie_mwh },
+      akumulace: { mwh: pretok_akumulace_mwh, cena: cena_akumulace_mwh },
+      komunita:  { mwh: pretok_komunita_mwh,  cena: cena_komunita_mwh },
+      sit:       { mwh: pretok_sit_mwh,        cena: vykup }
+    }
   });
 
   // Uložit do OEES_STATE
   OEES_STATE.case.fve = {
     vstup: { kwp, lokalita, orientace, sklon, spotreba_mwh: spotreba, profil: sc_ratio, baterie },
     vysledek: {
-      vyroba_kwh_rok: vyroba,
-      vlastni_spotreba_kwh: sc.vlastni_spotreba_kwh,
-      pretoky_kwh: sc.pretoky_kwh,
+      vyroba_mwh_rok: Math.round(vyroba / 100) / 10,
+      vlastni_spotreba_mwh: Math.round(sc.vlastni_spotreba_kwh / 100) / 10,
+      pretoky_mwh_rok: Math.round(celkovy_prebytekMWh * 10) / 10,
       pokryti_procenta: sc.pokryti_procenta,
       investice_kc: ekonomika.investice_kc,
       rocni_prinos_r1: ekonomika.rocni_prinos_r1,
       navratnost_let: ekonomika.navratnost_let,
       roi_25let_procenta: ekonomika.roi_25let_procenta,
-      cisty_zisk_25l: ekonomika.cistý_zisk_25l
+      cisty_zisk_25l: ekonomika.cistý_zisk_25l,
+      pretoky: {
+        baterie_mwh: pretok_baterie_mwh,   baterie_kc_mwh: cena_baterie_mwh,
+        akumulace_mwh: pretok_akumulace_mwh, akumulace_kc_mwh: cena_akumulace_mwh,
+        komunita_mwh: pretok_komunita_mwh, komunita_kc_mwh: cena_komunita_mwh,
+        sit_mwh: pretok_sit_mwh,           sit_kc_mwh: vykup
+      }
     }
   };
 
@@ -467,6 +520,7 @@ function spocitejFVE() {
 function zobrazVysledkyFVE(kwp, vyroba, sc, eko, spotreba_kwh) {
   const el = document.getElementById('fve_vysledky');
   el.style.display = 'block';
+  const fmt = n => new Intl.NumberFormat('cs-CZ').format(n);
 
   const navrat = typeof eko.navratnost_let === 'number'
     ? eko.navratnost_let.toFixed(1) + ' let'
@@ -478,15 +532,15 @@ function zobrazVysledkyFVE(kwp, vyroba, sc, eko, spotreba_kwh) {
 
       <div class="results-grid">
         <div class="result-box">
-          <div class="val">${new Intl.NumberFormat('cs-CZ').format(vyroba)}</div>
-          <div class="lbl">Roční výroba (kWh/rok)</div>
+          <div class="val">${fmt(Math.round(vyroba/100)/10)} MWh</div>
+          <div class="lbl">Roční výroba</div>
         </div>
         <div class="result-box">
           <div class="val">${sc.pokryti_procenta} %</div>
           <div class="lbl">Pokrytí spotřeby z FVE</div>
         </div>
         <div class="result-box highlight">
-          <div class="val">${new Intl.NumberFormat('cs-CZ').format(eko.rocni_prinos_r1)} Kč</div>
+          <div class="val">${fmt(eko.rocni_prinos_r1)} Kč</div>
           <div class="lbl">Roční přínos (rok 1)</div>
         </div>
         <div class="result-box highlight">
@@ -497,24 +551,41 @@ function zobrazVysledkyFVE(kwp, vyroba, sc, eko, spotreba_kwh) {
 
       <table class="breakdown" style="margin-top:16px">
         <thead><tr>
-          <th>Ukazatel</th><th class="num">Hodnota</th>
+          <th>Ukazatel</th><th class="num">MWh/rok</th><th class="num">Kč/MWh</th><th class="num">Kč/rok</th>
         </tr></thead>
         <tbody>
           <tr><td>Výroba FVE</td>
-              <td class="num">${new Intl.NumberFormat('cs-CZ').format(vyroba)} kWh/rok</td></tr>
-          <tr><td>Vlastní spotřeba</td>
-              <td class="num">${new Intl.NumberFormat('cs-CZ').format(sc.vlastni_spotreba_kwh)} kWh/rok</td></tr>
-          <tr><td>Přetoky do sítě</td>
-              <td class="num">${new Intl.NumberFormat('cs-CZ').format(sc.pretoky_kwh)} kWh/rok</td></tr>
+              <td class="num">${fmt(Math.round(vyroba/100)/10)}</td><td></td><td></td></tr>
+          <tr><td>Vlastní spotřeba (úspora)</td>
+              <td class="num">${fmt(Math.round(sc.vlastni_spotreba_kwh/100)/10)}</td>
+              <td class="num">${fmt(eko.cena_elektriny_kc_mwh || 5800)}</td>
+              <td class="num">${fmt(Math.round(sc.vlastni_spotreba_kwh * (eko.cena_elektriny_kc_mwh || 5800) / 1000))}</td></tr>
+          <tr style="font-weight:600;background:rgba(100,180,255,0.08)"><td colspan="4">Přetoky – celkem ${fmt(Math.round(sc.pretoky_kwh/100)/10)} MWh/rok</td></tr>
+          ${eko.pretoky_detail?.baterie?.mwh > 0 ? `<tr><td>&nbsp;&nbsp;→ Baterie</td>
+              <td class="num">${fmt(eko.pretoky_detail.baterie.mwh)}</td>
+              <td class="num">${fmt(eko.pretoky_detail.baterie.cena)}</td>
+              <td class="num">${fmt(Math.round(eko.pretoky_detail.baterie.mwh * eko.pretoky_detail.baterie.cena))}</td></tr>` : ''}
+          ${eko.pretoky_detail?.akumulace?.mwh > 0 ? `<tr><td>&nbsp;&nbsp;→ Akumulace (TUV)</td>
+              <td class="num">${fmt(eko.pretoky_detail.akumulace.mwh)}</td>
+              <td class="num">${fmt(eko.pretoky_detail.akumulace.cena)}</td>
+              <td class="num">${fmt(Math.round(eko.pretoky_detail.akumulace.mwh * eko.pretoky_detail.akumulace.cena))}</td></tr>` : ''}
+          ${eko.pretoky_detail?.komunita?.mwh > 0 ? `<tr><td>&nbsp;&nbsp;→ Energetická komunita</td>
+              <td class="num">${fmt(eko.pretoky_detail.komunita.mwh)}</td>
+              <td class="num">${fmt(eko.pretoky_detail.komunita.cena)}</td>
+              <td class="num">${fmt(Math.round(eko.pretoky_detail.komunita.mwh * eko.pretoky_detail.komunita.cena))}</td></tr>` : ''}
+          ${eko.pretoky_detail?.sit?.mwh > 0 ? `<tr><td>&nbsp;&nbsp;→ Prodej do sítě</td>
+              <td class="num">${fmt(eko.pretoky_detail.sit.mwh)}</td>
+              <td class="num">${fmt(eko.pretoky_detail.sit.cena)}</td>
+              <td class="num">${fmt(Math.round(eko.pretoky_detail.sit.mwh * eko.pretoky_detail.sit.cena))}</td></tr>` : ''}
           <tr><td>Ze sítě zbývá odebrat</td>
-              <td class="num">${new Intl.NumberFormat('cs-CZ').format(sc.ze_site_kwh)} kWh/rok</td></tr>
+              <td class="num">${fmt(Math.round(sc.ze_site_kwh/100)/10)}</td><td></td><td></td></tr>
           <tr><td>Odhadovaná investice</td>
-              <td class="num">${new Intl.NumberFormat('cs-CZ').format(eko.investice_kc)} Kč</td></tr>
+              <td></td><td></td><td class="num">${fmt(eko.investice_kc)} Kč</td></tr>
           <tr><td>Čistý zisk za 25 let</td>
-              <td class="num">${new Intl.NumberFormat('cs-CZ').format(eko.cistý_zisk_25l)} Kč</td></tr>
+              <td></td><td></td><td class="num">${fmt(eko.cistý_zisk_25l)} Kč</td></tr>
           <tr class="total">
             <td><strong>ROI za 25 let</strong></td>
-            <td class="num"><strong>${eko.roi_25let_procenta} %</strong></td>
+            <td></td><td></td><td class="num"><strong>${eko.roi_25let_procenta} %</strong></td>
           </tr>
         </tbody>
       </table>

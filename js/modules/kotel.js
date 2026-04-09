@@ -74,8 +74,16 @@ function vypocetKotel() {
 
   const typ = document.getElementById('kotel_typ')?.value || 'kotel_30_50';
   const pocet = parseInt(document.getElementById('kotel_pocet')?.value) || 1;
-  const podil_tepla = parseFloat(document.getElementById('kotel_podil_tepla')?.value) || 0;
+  let podil_tepla = parseFloat(document.getElementById('kotel_podil_tepla')?.value) || 0;
   const provozni_hodiny = parseInt(document.getElementById('kotel_hodiny')?.value) || 0;
+
+  // Prevezmi z tepelne bilance pokud je aktivni
+  const bilance_kotel = OEES_STATE.case.teplo;
+  if (bilance_kotel && bilance_kotel.mwh_kotel > 0) {
+    const el = document.getElementById('kotel_podil_tepla');
+    if (el && parseFloat(el.value) !== bilance_kotel.mwh_kotel) el.value = bilance_kotel.mwh_kotel;
+    podil_tepla = bilance_kotel.mwh_kotel;
+  }
   const naddimenzovani = parseFloat(document.getElementById('kotel_naddimenzovani')?.value) || 0;
   const cena_plynu = parseFloat(document.getElementById('kotel_cena_plynu')?.value) || 1350;
   const stavajici_ucinnost = parseFloat(document.getElementById('kotel_stav_ucinnost')?.value) || 85;

@@ -236,6 +236,7 @@ const ADMIN_TABS = [
   { key: 'provize',   label: 'Provize a Body' },
   { key: 'dodavatele', label: 'Dodavatelé' },
   { key: 'poradci',   label: 'Poradci' },
+  { key: 'svr_zb',    label: 'SVR & Zelený bonus' },
   { key: 'nastaveni', label: 'Nastavení' }
 ];
 
@@ -487,8 +488,12 @@ async function nastaveniUlozit() {
 function switchTab(tabName) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
-  document.getElementById(`tab-${tabName}`).classList.add('active');
+  document.querySelector(`.tab[data-tab="${tabName}"]`)?.classList.add('active');
+  document.getElementById(`tab-${tabName}`)?.classList.add('active');
+  // Lazy init pro SVR & ZB
+  if (tabName === 'svr_zb' && typeof renderSvrZbAdmin === 'function') {
+    renderSvrZbAdmin('svr-zb-admin-container');
+  }
 }
 
 // ── API ──

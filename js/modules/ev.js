@@ -61,11 +61,11 @@ const EV_DATA = {
   // Prumerna spotreba EV
   spotreba_kwh_100km: 18, // kWh/100 km prumer
 
-  // Cena elektriny pro EV
-  cena_domaci_kwh: 3.80,    // bezna sazba
-  cena_tc_sazba_kwh: 2.50,  // sazba D57d
-  cena_firemni_kwh: 3.20,
-  cena_verejne_kwh: 8.50,   // verejne nabijeni prumer
+  // Cena elektriny pro EV (Kč/MWh)
+  cena_domaci_mwh: 3800,     // bezna sazba
+  cena_tc_sazba_mwh: 2500,   // sazba D57d
+  cena_firemni_mwh: 3200,
+  cena_verejne_mwh: 8500,    // verejne nabijeni prumer
 
   // Porovnani s benzinem/naftou
   cena_benzin_litr: 38.50,
@@ -123,15 +123,16 @@ function vypocetEV() {
   const celkovy_najezd = najezd_km * pocet_aut;
   const spotreba_kwh = celkovy_najezd * EV_DATA.spotreba_kwh_100km / 100;
 
-  // Cena za elektricke nabijeni
-  let cena_kwh;
+  // Cena za elektricke nabijeni (Kč/MWh)
+  let cena_mwh;
   switch (sazba) {
-    case 'domaci': cena_kwh = EV_DATA.cena_domaci_kwh; break;
-    case 'tc_sazba': cena_kwh = EV_DATA.cena_tc_sazba_kwh; break;
-    case 'verejne': cena_kwh = EV_DATA.cena_verejne_kwh; break;
-    default: cena_kwh = EV_DATA.cena_firemni_kwh;
+    case 'domaci': cena_mwh = EV_DATA.cena_domaci_mwh; break;
+    case 'tc_sazba': cena_mwh = EV_DATA.cena_tc_sazba_mwh; break;
+    case 'verejne': cena_mwh = EV_DATA.cena_verejne_mwh; break;
+    default: cena_mwh = EV_DATA.cena_firemni_mwh;
   }
-  const naklad_ev = Math.round(spotreba_kwh * cena_kwh);
+  const spotreba_mwh = spotreba_kwh / 1000;
+  const naklad_ev = Math.round(spotreba_mwh * cena_mwh);
 
   // Srovnani s fosilnim palivem
   let naklad_fosil, cena_palivo, spotreba_palivo;
@@ -169,14 +170,14 @@ function vypocetEV() {
         <tbody>
           <tr><td>Typ nabijecki</td><td>${nabijeci.nazev} x ${pocet}</td></tr>
           <tr><td>Celkovy rocni najezd</td><td>${celkovy_najezd.toLocaleString('cs-CZ')} km (${pocet_aut} aut)</td></tr>
-          <tr><td>Rocni spotreba elektriny</td><td>${spotreba_kwh.toLocaleString('cs-CZ')} kWh</td></tr>
+          <tr><td>Rocni spotreba elektriny</td><td>${(Math.round(spotreba_mwh*10)/10).toLocaleString('cs-CZ')} MWh</td></tr>
         </tbody>
       </table>
 
       <h3 style="margin-top:20px">Provozni naklady – EV vs ${srovnani === 'nafta' ? 'nafta' : 'benzin'}</h3>
       <table class="breakdown-table">
         <tbody>
-          <tr><td>Naklady EV (${cena_kwh} Kc/kWh)</td><td>${naklad_ev.toLocaleString('cs-CZ')} Kc/rok</td></tr>
+          <tr><td>Naklady EV (${cena_mwh.toLocaleString('cs-CZ')} Kc/MWh)</td><td>${naklad_ev.toLocaleString('cs-CZ')} Kc/rok</td></tr>
           <tr><td>Naklady ${srovnani} (${cena_palivo} Kc/l)</td><td>${naklad_fosil.toLocaleString('cs-CZ')} Kc/rok</td></tr>
           <tr class="total-row"><td><strong>Rocni uspora na palivu</strong></td>
             <td class="text-success"><strong>${uspora_provoz.toLocaleString('cs-CZ')} Kc/rok</strong></td></tr>
@@ -236,10 +237,10 @@ function inicializujModulEV(containerId) {
           <div class="field">
             <label>Sazba za elektrinu</label>
             <select id="ev_sazba" onchange="vypocetEV()">
-              <option value="firemni">Firemni tarif (~3,20 Kc/kWh)</option>
-              <option value="domaci">Domaci sazba (~3,80 Kc/kWh)</option>
-              <option value="tc_sazba">Sazba D57d – TC (~2,50 Kc/kWh)</option>
-              <option value="verejne">Verejne nabijeni (~8,50 Kc/kWh)</option>
+              <option value="firemni">Firemni tarif (~3 200 Kc/MWh)</option>
+              <option value="domaci">Domaci sazba (~3 800 Kc/MWh)</option>
+              <option value="tc_sazba">Sazba D57d – TC (~2 500 Kc/MWh)</option>
+              <option value="verejne">Verejne nabijeni (~8 500 Kc/MWh)</option>
             </select>
           </div>
 

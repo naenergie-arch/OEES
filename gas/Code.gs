@@ -74,6 +74,12 @@ function doGet(e) {
       case 'admin_settings':
         result = loadSettings();
         break;
+      case 'cases_list':
+        result = loadSheet('Cases');
+        break;
+      case 'case_detail':
+        result = loadCaseDetail(e.parameter.caseId);
+        break;
       case 'ping':
         result = { success: true, message: 'OEES Admin API v1.0', timestamp: new Date().toISOString() };
         break;
@@ -108,6 +114,9 @@ function doPost(e) {
         break;
       case 'admin_save_all':
         result = saveAll(payload);
+        break;
+      case 'case_save':
+        result = saveCase(payload);
         break;
       default:
         result = { success: false, error: 'Neznama POST akce: ' + action };
@@ -172,6 +181,63 @@ function loadSheet(sheetName, techFilter) {
     data = data.filter(r => r.technologie === techFilter);
   }
   return { success: true, data: data };
+}
+
+function loadCaseDetail(caseId) {
+  if (!caseId) return { success: false, error: 'Chybi caseId.' };
+  const db = getDb();
+  const sheet = db.getSheetByName('Cases');
+  if (!sheet) return { success: false, error: 'List Cases nenalezen.' };
+  const rows = sheetToJson(sheet);
+  const row = rows.find(r => r.case_id === caseId);
+  if (!row) return { success: false, error: 'Pripad nenalezen: ' + caseId };
+  return { success: true, data: row };
+}
+
+function saveCase(payload) {
+  const db = getDb();
+  let sheet = db.getSheetByName('Cases');
+  const row = {
+    case_id:       payload.case_id || ('CASE-' + Date.now().toString().slice(-8)),
+    created:       payload.created || new Date().toISOString(),
+    updated:       new Date().toISOString(),
+    company:       payload.company || '',
+    contact_email: payload.contact_email || '',
+    contact_phone: payload.contact_phone || '',
+    address:       payload.address || '',
+    type:          payload.type || '',
+    aktivni_moduly: payload.aktivni_moduly || '',
+    data_json:     payload.data_json || '{}'
+  };
+
+  if (!sheet) {
+    sheet = db.insertSheet('Cases');
+    const headers = Object.keys(row);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#e8f2fa');
+    sheet.setFrozenRows(1);
+  }
+
+  // Najdi existujici radek s timto case_id
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const caseIdCol = headers.indexOf('case_id');
+  let existingRow = -1;
+  if (caseIdCol >= 0) {
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][caseIdCol] === row.case_id) { existingRow = i + 1; break; }
+    }
+  }
+
+  const vals = headers.map(h => row[h] !== undefined ? row[h] : '');
+
+  if (existingRow > 0) {
+    sheet.getRange(existingRow, 1, 1, vals.length).setValues([vals]);
+  } else {
+    sheet.appendRow(vals);
+  }
+
+  return { success: true, case_id: row.case_id };
 }
 
 function loadSettings() {
