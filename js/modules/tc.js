@@ -173,6 +173,15 @@ function vypocetTC() {
         <strong>COP (Coefficient of Performance):</strong> TC ${tc.nazev} vyroba z 1 kWh elektriny
         priblizne ${tc.cop_prumer} kWh tepla. V zime ${tc.cop_zima}, na jare/podzimu ${tc.cop_jaro_podzim}.
       </div>
+
+      ${vodaData && vodaData.tepelny_vykon_tuv_kw > 0 ? `
+      <div style="margin-top:12px;padding:12px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:var(--radius-sm)">
+        <strong>💧 TUV z modulu Voda</strong><br>
+        Ohřev TUV vyžaduje <strong>${vodaData.tepelny_vykon_tuv_kw.toFixed(1)} kW</strong> tepelného výkonu
+        a <strong>${vodaData.energie_ohrev_mwh_rok.toFixed(1)} MWh/rok</strong> tepla.<br>
+        TČ pokrývá ${Math.round(vodaData.podil_tc * 100)}% ohřevu TUV = <strong>${vodaData.el_spotreba_tc_tuv_mwh.toFixed(1)} MWh/rok</strong> elektřiny (COP ${vodaData.cop_tc}).
+        ${vodaData.tepelny_vykon_tuv_kw > vykon_tc * 0.3 ? '<br><em>⚠️ TUV tvoří významný podíl tepelné potřeby – zvažte kombinovaný režim vytápění + TUV.</em>' : ''}
+      </div>` : ''}
     </div>`;
 }
 
