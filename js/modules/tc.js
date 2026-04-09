@@ -83,6 +83,9 @@ function vypocetTC() {
     if (el && parseFloat(el.value) !== bilance.mwh_tc) el.value = bilance.mwh_tc;
   }
 
+  // Přečti TUV data z modulu Voda (tepelný výkon TUV pro dimenzování)
+  const vodaData = OEES_STATE.case?.voda;
+
   // Priorita: podil_tepla > spotreba > ztrata
   const potreba_mwh_raw = podil_tepla > 0 ? podil_tepla : (spotreba_tepla > 0 ? spotreba_tepla : (tepelna_ztrata * 2200 / 1000));
 
