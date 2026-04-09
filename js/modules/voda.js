@@ -137,7 +137,8 @@ function vypocetVoda() {
   const doba_ohrevu = parseFloat(document.getElementById('voda_doba_ohrevu')?.value) || VODA_DATA.doba_ohrevu_h;
   const cirkulace = document.getElementById('voda_cirkulace')?.value === 'ano';
   const cop_tc = parseFloat(document.getElementById('voda_cop_tc')?.value) || VODA_DATA.tc_cop;
-  const podil_tc = parseFloat(document.getElementById('voda_podil_tc')?.value) || VODA_DATA.tc_podil_ohrevu;
+  const podil_tc_pct = parseFloat(document.getElementById('voda_podil_tc')?.value) || (VODA_DATA.tc_podil_ohrevu * 100);
+  const podil_tc = podil_tc_pct / 100;
 
   const cena_tepla_gj = parseFloat(document.getElementById('voda_cena_gj')?.value) || VODA_DATA.cena_tepla_gj;
   const cena_el_kwh = parseFloat(document.getElementById('voda_cena_el')?.value) || VODA_DATA.cena_elektriny_kwh;
