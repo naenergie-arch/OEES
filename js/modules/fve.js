@@ -598,6 +598,19 @@ function zobrazVysledkyFVE(kwp, vyroba, sc, eko, spotreba_kwh) {
         ${new Intl.NumberFormat('cs-CZ').format(spotreba_kwh)} kWh/rok.<br>
         <em>Pro přesnější výsledky použijte tlačítko PVGIS (satelitní data).</em>
       </div>
+
+      ${(function(){
+        const voda = OEES_STATE.case?.voda;
+        if (!voda || !voda.el_spotreba_tc_tuv_mwh || voda.el_spotreba_tc_tuv_mwh < 0.1) return '';
+        const mwh = voda.el_spotreba_tc_tuv_mwh.toFixed(1);
+        const celkem = (spotreba_kwh/1000 + voda.el_spotreba_tc_tuv_mwh).toFixed(1);
+        return '<div style="margin-top:10px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:6px;padding:12px;font-size:0.83rem">' +
+          '<strong>💧 TČ pro TUV (z modulu Voda)</strong><br>' +
+          'Tepelné čerpadlo pro ohřev TUV potřebuje <strong>' + mwh + ' MWh/rok</strong> elektřiny (COP ' + voda.cop_tc + ', podíl TČ ' + Math.round(voda.podil_tc*100) + '%).<br>' +
+          'Celková spotřeba vč. TČ TUV: <strong>' + celkem + ' MWh/rok</strong>. ' +
+          'Pro správné dimenzování FVE zadejte tuto hodnotu do pole Spotřeba objektu.' +
+          '</div>';
+      })()}
     </div>
   `;
 }
