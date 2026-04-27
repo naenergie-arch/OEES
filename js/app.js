@@ -528,20 +528,6 @@ function sestavSouhrn() {
   if (btnFin) btnFin.style.display = maStudii ? '' : 'none';
 }
 
-// ─── Upresneni finalni studie (otevreni z vysledku) ─────────────────────────
-
-function otevritUpresneniStudie() {
-  const caseId = OEES_STATE.case.id;
-  const url = 'admin.html?tab=upresneni' + (caseId ? '&case=' + encodeURIComponent(caseId) : '');
-  window.open(url, '_blank');
-}
-
-function generujFinalniStudii() {
-  const caseId = OEES_STATE.case.id;
-  if (!caseId) { alert('Nejdrive ulozte pripad.'); return; }
-  // TODO: volani GAS/Make.com pro generovani finalni studie
-  alert('Generovani finalni studie pro pripad ' + caseId + ' – pripravujeme.');
-}
 
 // ─── Ulozeni pripadu do OEES API / Google Sheets ─────────────────────────────
 
