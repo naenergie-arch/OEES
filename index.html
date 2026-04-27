@@ -432,6 +432,13 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════
+       UPŘESNĚNÍ FINÁLNÍ STUDIE
+  ══════════════════════════════════════════════════════ -->
+  <div class="module-panel" id="panel-upresneni">
+    <div id="modul_upresneni_container"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
        SOUHRN VYSLEDKU
   ══════════════════════════════════════════════════════ -->
   <div class="module-panel" id="panel-vysledky">
@@ -445,7 +452,7 @@
       <div class="btn-row" style="margin-top:24px;flex-wrap:wrap;gap:8px">
         <button class="btn btn-primary" onclick="ulozCase()">💾 Uložit případ</button>
         <button class="btn btn-primary" onclick="generujStudii()" title="Vygeneruje předběžnou studii jako HTML dokument (Ctrl+P pro PDF)">📄 Předběžná studie</button>
-        <button class="btn btn-secondary" onclick="otevritUpresneniStudie()" title="Přejde na záložku Přílohy pro doplnění před finální studií">📋 Doplnit přílohy</button>
+        <button class="btn btn-secondary" onclick="otevritUpresneniStudie()" title="Přejde na záložku Upřesnění pro doplnění hodnot před finální studií">📋 Upřesnění studie</button>
         <button class="btn btn-secondary" onclick="generujFinalniStudii()" title="Vygeneruje finální studii se všemi přílohami">📖 Finální studie</button>
         <button class="btn btn-secondary" onclick="resetFormStav()">🔄 Nový případ</button>
       </div>
@@ -493,6 +500,7 @@
 <script src="js/modules/financovani.js?v=2"></script>
 <script src="js/modules/poznamky.js?v=2"></script>
 <script src="js/modules/prilohy.js?v=1"></script>
+<script src="js/modules/upresneni.js?v=1"></script>
 <script src="js/modules/studie.js?v=1"></script>
 <script src="js/app.js?v=20260427a"></script>
 
