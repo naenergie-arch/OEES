@@ -150,6 +150,7 @@ const OEES_MODULY = [
   { id: 'financovani',  label: 'Financování',              icon: '16', checkbox: null,              panelId: 'panel-financovani',   initFn: 'inicializujModulFinancovani',   containerId: 'modul_financovani_container' },
   { id: 'poznamky',     label: 'Poznámky',                 icon: '17', checkbox: null,              panelId: 'panel-poznamky',      initFn: 'inicializujModulPoznamky',      containerId: 'modul_poznamky_container' },
   { id: 'prilohy',      label: 'Přílohy',                  icon: '📎', checkbox: null,              panelId: 'panel-prilohy',       initFn: 'inicializujModulPrilohy',       containerId: 'modul_prilohy_container' },
+  { id: 'upresneni',    label: 'Upřesnění studie',         icon: '📋', checkbox: null,              panelId: 'panel-upresneni',     initFn: 'inicializujModulUpresneni',     containerId: 'modul_upresneni_container' },
   { id: 'vysledky',     label: 'Výsledky & Studie',        icon: '✓',  checkbox: null,              panelId: 'panel-vysledky' }
 ];
 
