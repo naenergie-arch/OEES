@@ -118,6 +118,7 @@ const OEES_STATE = {
     dotace:       { vstup: {}, vysledek: null },
     financovani:  { vstup: {}, vysledek: null },
     poznamky:     {},
+    upresneni:    {},
     prilohy:      []
   }
 };
