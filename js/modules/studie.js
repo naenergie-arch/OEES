@@ -423,6 +423,110 @@ function _sTOC(c, typ) {
 
 // ─── Sestavení celého dokumentu ──────────────────────────────────────────────
 
+function _sUpresneniFinalni(c) {
+  const u = c.upresneni || {};
+  const moduly = OEES_STATE.aktivniModuly || [];
+
+  // Etikety modulů pro zobrazení
+  const labels = {
+    fve: '☀️ FVE – Fotovoltaická elektrárna',
+    tc: '❄️ Tepelné čerpadlo',
+    kogenerace: '⚡ Kogenerační jednotka',
+    kotel: '🔥 Plynový kotel',
+    voda: '💧 Ohřev teplé vody',
+    ev: '🔌 Nabíječka elektromobilů',
+    baterie: '🔋 Bateriové úložiště',
+    inteligentni: '🧠 Inteligentní řízení',
+    distribuce: '📊 Optimalizace distribuce'
+  };
+
+  // Sestavíme řádky pro aktivní moduly s upresneni daty
+  const radky = [];
+  let celkemPre = 0, celkemFin = 0;
+
+  for (const mod of moduly) {
+    const lbl = labels[mod.id];
+    if (!lbl) continue;
+    const upMod = u[mod.id] || {};
+    // Předběžná hodnota – z UPRESNENI_DEF.investiceKey nebo přímá cesta
+    let preVal = null;
+    if (typeof UPRESNENI_DEF !== 'undefined' && UPRESNENI_DEF[mod.id]?.investiceKey) {
+      try { preVal = UPRESNENI_DEF[mod.id].investiceKey(); } catch (e) { preVal = null; }
+    }
+    const finVal = upMod.celkem != null && upMod.celkem !== '' ? parseFloat(upMod.celkem) : null;
+
+    if (preVal == null && finVal == null) continue;
+    if (preVal != null) celkemPre += preVal;
+    if (finVal != null) celkemFin += finVal;
+
+    radky.push(`
+      <tr>
+        <td>${lbl}</td>
+        <td style="text-align:right">${_fmtKc(preVal)}</td>
+        <td style="text-align:right;font-weight:600;color:#1a6b2a">${finVal != null ? _fmtKc(finVal) : '<span style="opacity:0.5">—</span>'}</td>
+      </tr>
+    `);
+  }
+
+  if (radky.length === 0) return '';
+
+  // VIP sleva a náklady ES
+  const vipPct   = parseFloat(u.vip_sleva_pct) || 0;
+  const nakladyES = parseFloat(u.naklady_es)   || 0;
+  const sleva    = celkemFin > 0 && vipPct > 0 ? celkemFin * vipPct / 100 : 0;
+  const celkemPoSlevě = celkemFin - sleva + nakladyES;
+
+  const poznamkyHtml = u.do_studie && u.poznamky
+    ? `<div style="margin-top:16px;padding:12px;background:#f5f9f5;border-left:3px solid #2e7d32;border-radius:4px;font-size:0.9rem">
+        <strong>📝 Poznámky poradce:</strong><br>${u.poznamky.replace(/\n/g, '<br>')}
+       </div>`
+    : '';
+
+  return `
+  <section class="section">
+    <h2>Finální přehled investic</h2>
+    <p style="font-size:0.9rem;opacity:0.75;margin-bottom:16px">
+      Hodnoty upřesněné energetickým poradcem na základě předběžné analýzy.
+    </p>
+    <table class="dt">
+      <thead>
+        <tr>
+          <th>Technologie / opatření</th>
+          <th style="text-align:right;width:150px">Předběžná investice</th>
+          <th style="text-align:right;width:150px">Finální investice</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${radky.join('')}
+        <tr style="border-top:2px solid #ddd;font-weight:700">
+          <td>Celkem investice</td>
+          <td style="text-align:right">${celkemPre > 0 ? _fmtKc(celkemPre) : '—'}</td>
+          <td style="text-align:right;color:#1a6b2a">${celkemFin > 0 ? _fmtKc(celkemFin) : '—'}</td>
+        </tr>
+        ${vipPct > 0 ? `
+        <tr>
+          <td>VIP sleva (${vipPct} %)</td>
+          <td></td>
+          <td style="text-align:right;color:#c62828">- ${_fmtKc(sleva)}</td>
+        </tr>` : ''}
+        ${nakladyES > 0 ? `
+        <tr>
+          <td>Náklady na zpracování ES</td>
+          <td></td>
+          <td style="text-align:right">${_fmtKc(nakladyES)}</td>
+        </tr>` : ''}
+        ${(vipPct > 0 || nakladyES > 0) ? `
+        <tr style="font-weight:700;background:#f0f7f0">
+          <td>Celkem po úpravách</td>
+          <td></td>
+          <td style="text-align:right;color:#1a6b2a">${_fmtKc(celkemPoSlevě)}</td>
+        </tr>` : ''}
+      </tbody>
+    </table>
+    ${poznamkyHtml}
+  </section>`;
+}
+
 function _sestavStudii(typ) {
   const c    = OEES_STATE.case;
   const obj  = _sberiObjekt();
@@ -434,6 +538,7 @@ function _sestavStudii(typ) {
 
   const sekce = [
     _sSouhrn(c),
+    !isPre ? _sUpresneniFinalni(c) : null,
     _sElektrina(c),
     _sFVE(c),
     _sVoda(c),
