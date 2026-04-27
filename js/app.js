@@ -230,10 +230,10 @@ function prejiNaKrokIndex(index) {
 
   OEES_STATE.aktualniKrok = index;
 
-  // Inicializuj modul pri prvnim zobrazeni
+  // Inicializuj modul pri prvnim zobrazeni (dashboard vzdy obnovuj)
   if (modul.initFn && modul.containerId) {
     const container = document.getElementById(modul.containerId);
-    if (container && !container.children.length) {
+    if (container && (!container.children.length || modul.alwaysRefresh)) {
       const fn = window[modul.initFn];
       if (typeof fn === 'function') fn(modul.containerId);
     }
