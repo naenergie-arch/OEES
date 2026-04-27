@@ -117,7 +117,8 @@ const OEES_STATE = {
     inteligentni: { vstup: {}, vysledek: null },
     dotace:       { vstup: {}, vysledek: null },
     financovani:  { vstup: {}, vysledek: null },
-    poznamky:     {}
+    poznamky:     {},
+    prilohy:      []
   }
 };
 
