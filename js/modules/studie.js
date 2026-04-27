@@ -537,13 +537,20 @@ function generujFinalniStudii() {
 }
 
 function otevritUpresneniStudie() {
-  // Přeskočí na záložku Přílohy pro doplnění příloh před finální studií
+  // Přeskočí na záložku Upřesnění studie
   const kroky = OEES_STATE.aktivniModuly || [];
+  for (let i = 0; i < kroky.length; i++) {
+    if (kroky[i].id === 'upresneni') {
+      prejiNaKrokIndex(i);
+      return;
+    }
+  }
+  // Fallback – záložka Přílohy
   for (let i = 0; i < kroky.length; i++) {
     if (kroky[i].id === 'prilohy') {
       prejiNaKrokIndex(i);
       return;
     }
   }
-  alert('Doplňte nebo zkontrolujte přílohy a pak klikněte na „Generovat finální studii".');
+  alert('Upřesnění studie nenalezeno – zkontrolujte konfiguraci záložek.');
 }
