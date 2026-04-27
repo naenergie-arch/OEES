@@ -148,7 +148,8 @@ const OEES_MODULY = [
   { id: 'dotace',       label: 'Dotace',                   icon: '15', checkbox: null,              panelId: 'panel-dotace',        initFn: 'inicializujModulDotace',        containerId: 'modul_dotace_container' },
   { id: 'financovani',  label: 'Financování',              icon: '16', checkbox: null,              panelId: 'panel-financovani',   initFn: 'inicializujModulFinancovani',   containerId: 'modul_financovani_container' },
   { id: 'poznamky',     label: 'Poznámky',                 icon: '17', checkbox: null,              panelId: 'panel-poznamky',      initFn: 'inicializujModulPoznamky',      containerId: 'modul_poznamky_container' },
-  { id: 'vysledky',     label: 'Výsledky',                 icon: '✓',  checkbox: null,              panelId: 'panel-vysledky' }
+  { id: 'prilohy',      label: 'Přílohy',                  icon: '📎', checkbox: null,              panelId: 'panel-prilohy',       initFn: 'inicializujModulPrilohy',       containerId: 'modul_prilohy_container' },
+  { id: 'vysledky',     label: 'Výsledky & Studie',        icon: '✓',  checkbox: null,              panelId: 'panel-vysledky' }
 ];
 
 // ─── Sestaveni aktivnich kroku dle checkboxu ────────────────────────────────
@@ -694,11 +695,9 @@ async function nacistPripad() {
   }
 }
 
-// ─── Generovani studie ───────────────────────────────────────────────────────
-
-function generujStudii() {
-  alert('Generování předběžné studie – bude implementováno ve Fázi 2.');
-}
+// ─── Generovani studie – implementace je v js/modules/studie.js ─────────────
+// Funkce generujStudii(), generujFinalniStudii(), otevritUpresneniStudie()
+// jsou definovány v studie.js
 
 // ─── Ukladani a obnova nastaveni (localStorage) ────────────────────────────
 
