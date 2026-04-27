@@ -443,11 +443,11 @@
         <p class="text-muted">Dokončete předchozí kroky pro zobrazení souhrnných výsledků.</p>
       </div>
       <div class="btn-row" style="margin-top:24px;flex-wrap:wrap;gap:8px">
-        <button class="btn btn-primary" onclick="ulozCase()">&#128190; Ulozit pripad</button>
-        <button class="btn btn-primary" onclick="generujStudii()">&#128196; Generovat predbeznou studii</button>
-        <button class="btn btn-secondary" id="btn-upresneni-studie" onclick="otevritUpresneniStudie()" style="display:none">&#128203; Upravit finalní studii</button>
-        <button class="btn btn-secondary" id="btn-finalni-studie" onclick="generujFinalniStudii()" style="display:none">&#128214; Generovat finalni studii</button>
-        <button class="btn btn-secondary" onclick="resetFormStav()">&#128260; Novy pripad</button>
+        <button class="btn btn-primary" onclick="ulozCase()">💾 Uložit případ</button>
+        <button class="btn btn-primary" onclick="generujStudii()" title="Vygeneruje předběžnou studii jako HTML dokument (Ctrl+P pro PDF)">📄 Předběžná studie</button>
+        <button class="btn btn-secondary" onclick="otevritUpresneniStudie()" title="Přejde na záložku Přílohy pro doplnění před finální studií">📋 Doplnit přílohy</button>
+        <button class="btn btn-secondary" onclick="generujFinalniStudii()" title="Vygeneruje finální studii se všemi přílohami">📖 Finální studie</button>
+        <button class="btn btn-secondary" onclick="resetFormStav()">🔄 Nový případ</button>
       </div>
     </div>
   </div>
