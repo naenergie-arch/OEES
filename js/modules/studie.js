@@ -631,6 +631,8 @@ function generujStudii() {
   if (!w) { alert('Povolte pop-up okna pro tento web (nahoře v adresním řádku) a zkuste znovu.'); return; }
   w.document.write(html);
   w.document.close();
+  // Zaznamenej do stavu pro dashboard
+  OEES_STATE.case._studie_predbezna = new Date().toISOString();
 }
 
 function generujFinalniStudii() {
@@ -639,6 +641,8 @@ function generujFinalniStudii() {
   if (!w) { alert('Povolte pop-up okna pro tento web (nahoře v adresním řádku) a zkuste znovu.'); return; }
   w.document.write(html);
   w.document.close();
+  // Zaznamenej do stavu pro dashboard
+  OEES_STATE.case._studie_finalni = new Date().toISOString();
 }
 
 function otevritUpresneniStudie() {
